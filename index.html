@@ -2164,7 +2164,7 @@
             resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;"><div class="loading-spinner"></div><p style="margin-top:1rem;color:var(--text-secondary);">Removendo fundo da imagem...</p></div>';
             var tolerance = document.getElementById('bgTolerance') ? document.getElementById('bgTolerance').value : 35;
             try {
-                var response = await fetch(this.apiBase + '/api/remove-bg', {
+                var response = await fetch('/api/remove-bg', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ imageBase64: this.currentListing.imageBase64, tolerance: parseInt(tolerance), edgeSoftness: 8 })
@@ -2213,7 +2213,7 @@
             var platform = document.getElementById('influencerPlatform').value;
             var tone = document.getElementById('influencerTone').value;
             try {
-                var response = await fetch(this.apiBase + '/api/generate-influencer', {
+                var response = await fetch('/api/generate-influencer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ listing: this.currentListing, platform: platform, tone: tone })
