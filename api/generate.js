@@ -366,10 +366,30 @@ export default async function handler(req, res) {
       ? formatResultForDisplay(structured, mkt)
       : resultText;
 
+    // Map Portuguese fields to English fields expected by frontend displayResults()
+    let mappedListing = null;
+    if (structured && typeof structured === 'object') {
+      mappedListing = {
+        title: structured.titulo || '',
+        titles: structured.titulo ? [structured.titulo] : [],
+        description: structured.descricao || '',
+        keywords: structured.palavras_chave || structured.tags_busca || [],
+        category: structured.categoria_sugerida || '',
+        priceRange: structured.preco_sugerido || '',
+        price_range: structured.preco_sugerido || '',
+        attributes: structured.ficha_tecnica || structured.atributos || {},
+        quality: 85,
+        bullet_points: structured.bullet_points || [],
+        dicas_foto: structured.dicas_foto || '',
+        backend_keywords: structured.backend_keywords || '',
+        _original: structured
+      };
+    }
+
     return res.status(200).json({
       success: true,
       result: displayText,
-      listing: displayText,
+      listing: mappedListing || displayText,
       structured: structured || resultText,
       marketplace: mkt,
       marketplaceName: config.name
