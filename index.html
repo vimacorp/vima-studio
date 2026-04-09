@@ -914,7 +914,169 @@
     .btn-video { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; }
     .btn-action:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
     .btn-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .image-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    
+        .btn-removebg {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .btn-removebg:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+        .btn-influencer {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        .btn-influencer:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+        }
+
+        .removebg-result {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .removebg-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .removebg-card img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+        .removebg-card .checkerboard {
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+                              linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #ccc 75%),
+                              linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        .tolerance-control {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1rem 0;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+        .tolerance-control label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .tolerance-control input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent);
+        }
+        .tolerance-control span {
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .influencer-section {
+            margin-top: 1rem;
+        }
+        .influencer-controls {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .influencer-controls select {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+        .influencer-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .influencer-content h4 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .influencer-content pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        .influencer-hashtags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .influencer-hashtags span {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .influencer-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .influencer-meta-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+        .influencer-meta-card h5 {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .influencer-meta-card p {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        .alt-versions {
+            margin-top: 1rem;
+        }
+        .alt-version-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .alt-version-card h5 {
+            color: var(--accent);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        .alt-version-card pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: inherit;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+.image-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
     .image-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; transition: transform 0.3s; }
     .image-card:hover { transform: translateY(-4px); }
     .image-card img { width: 100%; height: auto; display: block; }
@@ -1200,6 +1362,47 @@
     <div id="videoSection">
       <h2 style="margin-bottom: 1.5rem; color: #e2e8f0;">Video Comercial</h2>
       <div id="videoContent"></div>
+
+            <!-- Remove BG Section -->
+            <div id="removeBgSection" style="display:none;" class="active">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3 style="color:var(--text-primary); margin:0;">&#x2702; Remover Fundo</h3>
+                </div>
+                <div class="tolerance-control">
+                    <label>Tolerancia:</label>
+                    <input type="range" id="bgTolerance" min="10" max="80" value="35" oninput="document.getElementById('tolValue').textContent = this.value">
+                    <span id="tolValue">35</span>
+                    <button class="btn-action" style="padding:0.4rem 1rem; font-size:0.8rem;" onclick="app.removeBg()">Reprocessar</button>
+                </div>
+                <div id="removeBgResult"></div>
+            </div>
+
+            <!-- IA Influencer Section -->
+            <div id="influencerSection" style="display:none;" class="active">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3 style="color:var(--text-primary); margin:0;">&#x1F31F; IA Influencer</h3>
+                </div>
+                <div class="influencer-controls">
+                    <select id="influencerPlatform">
+                        <option value="instagram">Instagram</option>
+                        <option value="tiktok">TikTok</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="twitter">X / Twitter</option>
+                        <option value="blog">Blog / Site</option>
+                    </select>
+                    <select id="influencerTone">
+                        <option value="descontraido">Descontraido</option>
+                        <option value="profissional">Profissional</option>
+                        <option value="luxo">Luxo / Premium</option>
+                        <option value="genuino">Genuino / Autentico</option>
+                        <option value="humor">Humor / Viral</option>
+                        <option value="tecnico">Tecnico / Review</option>
+                    </select>
+                    <button class="btn-action btn-influencer" style="padding:0.4rem 1rem; font-size:0.8rem;" onclick="app.generateInfluencer()">Gerar Conteudo</button>
+                </div>
+                <div id="influencerResult"></div>
+            </div>
+
     </div>
 
     
@@ -1742,11 +1945,12 @@
                   h += '</div></div>';
                 }
                       h += '<div class="action-buttons">';
-      h += '<button class="btn-action btn-images" onclick="app.generateImages()">&#x1F5BC; Gerar Imagens</button>';
-      h += '<button class="btn-action btn-video" onclick="app.generateVideo()">&#x1F3AC; Gerar Video</button>';
-      h += '</div>';
-
-      rs.innerHTML = h;
+            h += '<button class="btn-action btn-images" onclick="app.generateImages()">&#x1F5BC; Gerar Imagens</button>';
+            h += '<button class="btn-action btn-removebg" onclick="app.removeBg()">&#x2702; Remover Fundo</button>';
+            h += '<button class="btn-action btn-video" onclick="app.generateVideo()">&#x1F3AC; Gerar Video</button>';
+            h += '<button class="btn-action btn-influencer" onclick="app.generateInfluencer()">&#x1F31F; IA Influencer</button>';
+            h += '</div>';
+            rs.innerHTML = h;
                 rs.classList.add("active");
                 setTimeout(function() { var container = document.querySelector(".listing-container"); if (container && rs) { container.scrollTo({ top: rs.offsetTop - container.offsetTop - 20, behavior: "smooth" }); } }, 200);
             }
@@ -1995,7 +2199,174 @@
                 // Reset form
                 setTimeout(() => {
                     this.resetListingForm();
-                }, 500);
+                },
+
+        async removeBg() {
+            if (!this.currentListing || !this.currentListing.imageBase64) {
+                this.showToast('Nenhuma imagem carregada', 'error');
+                return;
+            }
+            var section = document.getElementById('removeBgSection');
+            section.style.display = 'block';
+            var resultDiv = document.getElementById('removeBgResult');
+            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;"><div class="loading-spinner"></div><p style="margin-top:1rem;color:var(--text-secondary);">Removendo fundo da imagem...</p></div>';
+            
+            var tolerance = document.getElementById('bgTolerance') ? document.getElementById('bgTolerance').value : 35;
+            
+            try {
+                var response = await fetch(this.apiBase + '/api/remove-bg', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imageBase64: this.currentListing.imageBase64,
+                        tolerance: parseInt(tolerance),
+                        edgeSoftness: 8
+                    })
+                });
+                var data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Erro ao remover fundo');
+                this.displayRemoveBg(data.images);
+            } catch (err) {
+                resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">Erro: ' + err.message + '</div>';
+            }
+        },
+
+        displayRemoveBg(images) {
+            var resultDiv = document.getElementById('removeBgResult');
+            var bg = images.detectedBg;
+            var bgColor = 'rgb(' + bg.r + ',' + bg.g + ',' + bg.b + ')';
+            var h = '<p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem;">Cor detectada: <span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;border:1px solid var(--border);background:' + bgColor + '"></span> RGB(' + bg.r + ',' + bg.g + ',' + bg.b + ')</p>';
+            h += '<div class="removebg-result">';
+            h += '<div class="removebg-card"><div class="checkerboard"><img src="' + images.transparent + '" alt="Fundo transparente"></div>';
+            h += '<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem;">Fundo Transparente (PNG)</p>';
+            h += '<button class="btn-action" style="padding:0.4rem 1rem;font-size:0.8rem;width:100%;" onclick="app.downloadRemoveBgImage(0)">Download PNG</button></div>';
+            h += '<div class="removebg-card"><img src="' + images.whiteBg + '" alt="Fundo branco">';
+            h += '<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem;">Fundo Branco (JPEG)</p>';
+            h += '<button class="btn-action" style="padding:0.4rem 1rem;font-size:0.8rem;width:100%;" onclick="app.downloadRemoveBgImage(1)">Download JPEG</button></div>';
+            h += '</div>';
+            resultDiv.innerHTML = h;
+            this.currentRemoveBgImages = images;
+            this.showToast('Fundo removido com sucesso!', 'success');
+        },
+
+        downloadRemoveBgImage(type) {
+            var images = this.currentRemoveBgImages;
+            if (!images) return;
+            var a = document.createElement('a');
+            if (type === 0) {
+                a.href = images.transparent;
+                a.download = 'produto-sem-fundo.png';
+            } else {
+                a.href = images.whiteBg;
+                a.download = 'produto-fundo-branco.jpg';
+            }
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        },
+
+        async generateInfluencer() {
+            if (!this.currentListing) {
+                this.showToast('Gere um anuncio primeiro', 'error');
+                return;
+            }
+            var section = document.getElementById('influencerSection');
+            section.style.display = 'block';
+            var resultDiv = document.getElementById('influencerResult');
+            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;"><div class="loading-spinner"></div><p style="margin-top:1rem;color:var(--text-secondary);">Gerando conteudo de influencer...</p></div>';
+            
+            var platform = document.getElementById('influencerPlatform').value;
+            var tone = document.getElementById('influencerTone').value;
+            
+            try {
+                var response = await fetch(this.apiBase + '/api/generate-influencer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        listing: this.currentListing,
+                        platform: platform,
+                        tone: tone
+                    })
+                });
+                var data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Erro ao gerar conteudo');
+                this.displayInfluencer(data.influencer);
+            } catch (err) {
+                resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">Erro: ' + err.message + '</div>';
+            }
+        },
+
+        displayInfluencer(inf) {
+            var resultDiv = document.getElementById('influencerResult');
+            var h = '';
+            
+            // Hook
+            if (inf.hook) {
+                h += '<div class="influencer-content"><h4>&#x1F3A3; Gancho</h4>';
+                h += '<pre>' + inf.hook + '</pre>';
+                h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.5rem;" onclick="app.copyText(document.getElementById('infHook').textContent)">Copiar</button>';
+                h += '<span id="infHook" style="display:none;">' + inf.hook.replace(/</g, '&lt;') + '</span>';
+                h += '</div>';
+            }
+            
+            // Main Content
+            h += '<div class="influencer-content"><h4>&#x1F4DD; Conteudo Principal</h4>';
+            h += '<pre id="infMainPre">' + inf.mainContent.replace(/</g, '&lt;') + '</pre>';
+            h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.5rem;" onclick="app.copyText(document.getElementById('infMainPre').textContent)">Copiar Conteudo</button>';
+            h += '</div>';
+            
+            // CTA
+            if (inf.cta) {
+                h += '<div class="influencer-content"><h4>&#x1F4E2; CTA (Chamada para Acao)</h4>';
+                h += '<pre>' + inf.cta.replace(/</g, '&lt;') + '</pre></div>';
+            }
+            
+            // Hashtags
+            if (inf.hashtags && inf.hashtags.length > 0) {
+                h += '<div class="influencer-content"><h4>&#x0023; Hashtags</h4>';
+                h += '<div class="influencer-hashtags">';
+                for (var i = 0; i < inf.hashtags.length; i++) {
+                    var tag = inf.hashtags[i];
+                    if (tag.charAt(0) !== '#') tag = '#' + tag;
+                    h += '<span>' + tag + '</span>';
+                }
+                h += '</div>';
+                var allTags = inf.hashtags.map(function(t) { return t.charAt(0) === '#' ? t : '#' + t; }).join(' ');
+                h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.75rem;" onclick="app.copyText('' + allTags.replace(/'/g, "\'") + '')">Copiar Hashtags</button>';
+                h += '</div>';
+            }
+            
+            // Alternative versions
+            if (inf.alternativeVersions && inf.alternativeVersions.length > 0) {
+                h += '<div class="alt-versions"><h4 style="color:var(--accent);margin-bottom:0.75rem;">&#x1F504; Versoes Alternativas</h4>';
+                for (var j = 0; j < inf.alternativeVersions.length; j++) {
+                    var v = inf.alternativeVersions[j];
+                    h += '<div class="alt-version-card"><h5>' + v.label + '</h5>';
+                    h += '<pre id="altV' + j + '">' + (v.content || '').replace(/</g, '&lt;') + '</pre>';
+                    h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.5rem;" onclick="app.copyText(document.getElementById('altV' + j + '').textContent)">Copiar</button>';
+                    h += '</div>';
+                }
+                h += '</div>';
+            }
+            
+            // Meta info
+            h += '<div class="influencer-meta">';
+            if (inf.suggestedVisual) {
+                h += '<div class="influencer-meta-card"><h5>&#x1F4F7; Visual Sugerido</h5><p>' + inf.suggestedVisual.replace(/</g, '&lt;') + '</p></div>';
+            }
+            if (inf.bestTimeToPost) {
+                h += '<div class="influencer-meta-card"><h5>&#x23F0; Melhor Horario</h5><p>' + inf.bestTimeToPost.replace(/</g, '&lt;') + '</p></div>';
+            }
+            if (inf.estimatedEngagement) {
+                h += '<div class="influencer-meta-card"><h5>&#x1F4CA; Engajamento Estimado</h5><p>' + inf.estimatedEngagement.replace(/</g, '&lt;') + '</p></div>';
+            }
+            h += '</div>';
+            
+            resultDiv.innerHTML = h;
+            this.showToast('Conteudo de influencer gerado!', 'success');
+        },
+
+ 500);
             }
 
             resetListingForm() {
