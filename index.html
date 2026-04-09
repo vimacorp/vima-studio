@@ -1,4 +1,63 @@
-<!DOCTYPE html>
+<!DOC
+    async generateScenes() {
+        if (!this.uploadedImage) {
+            this.showToast('Fa\u00e7a upload de uma imagem primeiro', 'error');
+            return;
+        }
+        var section = document.getElementById('scenesSection');
+        var loading = document.getElementById('scenesLoading');
+        var grid = document.getElementById('scenesGrid');
+        section.style.display = 'block';
+        loading.style.display = 'block';
+        grid.innerHTML = '';
+        section.scrollIntoView({ behavior: 'smooth' });
+
+        try {
+            var response = await fetch('/api/generate-scenes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: this.uploadedImage })
+            });
+            var data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Erro ao gerar cen\u00e1rios');
+            loading.style.display = 'none';
+            this.displayScenes(data.scenes);
+            this.showToast(data.scenes.length + ' cen\u00e1rios gerados com sucesso!', 'success');
+        } catch (err) {
+            loading.style.display = 'none';
+            grid.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;grid-column:1/-1;">Erro: ' + err.message + '</div>';
+            this.showToast('Erro ao gerar cen\u00e1rios', 'error');
+        }
+    }
+
+    displayScenes(scenes) {
+        var grid = document.getElementById('scenesGrid');
+        grid.innerHTML = '';
+        scenes.forEach(function(scene, idx) {
+            var card = document.createElement('div');
+            card.className = 'scene-card';
+            card.innerHTML = '<img src="' + scene.image + '" alt="' + scene.name + '" loading="lazy">' +
+                '<div class="scene-card-info">' +
+                '<h4>' + scene.name + '</h4>' +
+                '<div class="scene-card-actions">' +
+                '<button class="scene-download-btn" onclick="app.downloadScene(' + idx + ')">&#x2B07; Download</button>' +
+                '</div></div>';
+            grid.appendChild(card);
+        });
+        this.generatedScenes = scenes;
+    }
+
+    downloadScene(idx) {
+        var scene = this.generatedScenes[idx];
+        if (!scene) return;
+        var a = document.createElement('a');
+        a.href = scene.image;
+        a.download = 'cenario-' + scene.id + '.jpg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+TYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -924,6 +983,17 @@
         .btn-influencer {
             background: linear-gradient(135deg, #f59e0b, #d97706);
         }
+        .btn-scenes { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .btn-scenes:hover { background: linear-gradient(135deg, #d97706, #b45309); }
+        .scene-card { background: rgba(30, 41, 59, 0.5); border-radius: 12px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.1); transition: transform 0.2s, box-shadow 0.2s; }
+        .scene-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.3); }
+        .scene-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+        .scene-card-info { padding: 1rem; }
+        .scene-card-info h4 { color: #e2e8f0; margin: 0 0 0.5rem 0; font-size: 0.95rem; }
+        .scene-card-actions { display: flex; gap: 0.5rem; }
+        .scene-card-actions button { flex: 1; padding: 0.4rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+        .scene-download-btn { background: #3b82f6; color: white; }
+        .scene-download-btn:hover { background: #2563eb; }
         .btn-influencer:hover {
             background: linear-gradient(135deg, #d97706, #b45309);
         }
@@ -1405,6 +1475,17 @@
                     <button class="btn-action btn-influencer" style="padding:0.4rem 1rem; font-size:0.8rem;" onclick="app.generateInfluencer()">Gerar Conteudo</button>
                 </div>
                 <div id="influencerResult"></div>
+            </div>
+            <div id="scenesSection" style="display:none;" class="result-section">
+                <h2 style="margin-bottom: 1.5rem; color: #e2e8f0;">&#x1F3A8; Cen&#x00E1;rios com IA</h2>
+                <p style="color: #94a3b8; margin-bottom: 1rem;">Seu produto em 8 ambientes profissionais diferentes</p>
+                <div id="scenesContent">
+                    <div id="scenesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;"></div>
+                </div>
+                <div id="scenesLoading" style="display:none; text-align:center; padding: 2rem;">
+                    <div class="loading-spinner"></div>
+                    <p style="color: #94a3b8; margin-top: 1rem;">Gerando cen&#x00E1;rios... Isso pode levar at&#x00E9; 30 segundos</p>
+                </div>
             </div>
 
     
@@ -1951,6 +2032,7 @@
             h += '<button class="btn-action btn-removebg" onclick="app.removeBg()">&#x2702; Remover Fundo</button>';
             h += '<button class="btn-action btn-video" onclick="app.generateVideo()">&#x1F3AC; Gerar Video</button>';
             h += '<button class="btn-action btn-influencer" onclick="app.generateInfluencer()">&#x1F31F; IA Influencer</button>';
+            h += '<button class="btn-action btn-scenes" onclick="app.generateScenes()">&#x1F3A8; Gerar Cen&#x00E1;rios</button>';
             h += '</div>';
             rs.innerHTML = h;
                 rs.classList.add("active");
