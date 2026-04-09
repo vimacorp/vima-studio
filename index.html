@@ -178,7 +178,8 @@
         /* Main Layout */
         #app {
             display: flex;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .sidebar {
@@ -266,6 +267,8 @@
         .main-content {
             flex: 1;
             margin-left: 0;
+            height: 100%;
+            overflow: hidden;
             transition: margin-left 0.3s ease;
         }
 
@@ -275,12 +278,14 @@
 
         .page {
             display: none;
-            min-height: 100vh;
+            height: 100%;
         }
 
         .page.active {
             display: flex;
             flex-direction: column;
+            height: 100%;
+            overflow: hidden;
         }
 
         /* Login & Register Pages */
@@ -1655,7 +1660,7 @@
                 document.getElementById('resultPrice').textContent = listing.priceRange;
 
                 document.getElementById('resultsSection').classList.add('active');
-                setTimeout(() => { document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
+                setTimeout(() => { const container = document.querySelector('.listing-container'); const rs = document.getElementById('resultsSection'); if (container && rs) { container.scrollTop = rs.offsetTop - 20; } }, 150);
             }
 
             copyToClipboard(elementId, fieldName) {
