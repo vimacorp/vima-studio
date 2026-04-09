@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIMA Studio - Gere Anúncios com IA</title>
+    <title>VIMA Studio - Gere AnÃºncios com IA</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -922,20 +922,20 @@
                 </div>
                 <div class="nav-item" data-page="new-listing">
                     <span class="nav-icon">&#x2795;</span>
-                    <span>Novo Anúncio</span>
+                    <span>Novo AnÃºncio</span>
                 </div>
                 <div class="nav-item" data-page="my-listings">
                     <span class="nav-icon">&#x1F4CB;</span>
-                    <span>Meus Anúncios</span>
+                    <span>Meus AnÃºncios</span>
                 </div>
                 <div class="nav-item" data-page="settings">
                     <span class="nav-icon">&#x2699;&#xFE0F;</span>
-                    <span>Configurações</span>
+                    <span>ConfiguraÃ§Ãµes</span>
                 </div>
             </div>
             <div class="sidebar-user">
                 <div class="user-info">
-                    <div class="user-name" id="sidebarUserName">Usuário</div>
+                    <div class="user-name" id="sidebarUserName">UsuÃ¡rio</div>
                     <div class="user-email" id="sidebarUserEmail">email@example.com</div>
                 </div>
                 <button class="btn btn-secondary btn-small btn-block" onclick="app.logout()">
@@ -953,7 +953,7 @@
                         VIMA <span>STUDIO</span>
                     </div>
                     <h2 class="auth-title">Bem-vindo de volta</h2>
-                    <p class="auth-subtitle">Faça login para acessar sua conta</p>
+                    <p class="auth-subtitle">FaÃ§a login para acessar sua conta</p>
 
                     <form id="loginForm" onsubmit="app.handleLogin(event)">
                         <div class="form-group">
@@ -972,7 +972,7 @@
                     </form>
 
                     <div class="auth-links">
-                        Não tem conta? <a href="#register">Criar conta</a>
+                        NÃ£o tem conta? <a href="#register">Criar conta</a>
                     </div>
                 </div>
             </div>
@@ -989,7 +989,7 @@
                     <form id="registerForm" onsubmit="app.handleRegister(event)">
                         <div class="form-group">
                             <label class="form-label" for="registerName">Nome completo</label>
-                            <input type="text" id="registerName" placeholder="João Silva" required>
+                            <input type="text" id="registerName" placeholder="JoÃ£o Silva" required>
                         </div>
 
                         <div class="form-group">
@@ -1000,7 +1000,7 @@
                         <div class="form-group">
                             <label class="form-label" for="registerPassword">Senha</label>
                             <input type="password" id="registerPassword" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" minlength="6" required>
-                            <div class="form-help">Mínimo de 6 caracteres</div>
+                            <div class="form-help">MÃ­nimo de 6 caracteres</div>
                         </div>
 
                         <div class="form-group">
@@ -1014,7 +1014,7 @@
                     </form>
 
                     <div class="auth-links">
-                        Já tem conta? <a href="#login">Fazer login</a>
+                        JÃ¡ tem conta? <a href="#login">Fazer login</a>
                     </div>
                 </div>
             </div>
@@ -1023,33 +1023,33 @@
             <div id="dashboard" class="page">
                 <div class="dashboard-header">
                     <div class="welcome-section">
-                        <h1 class="welcome-title">Olá, <span id="userNameDisplay">Usuário</span>! &#x1F44B;</h1>
-                        <p class="welcome-subtitle">Bem-vindo ao VIMA Studio - Seu assistente de anúncios com IA</p>
+                        <h1 class="welcome-title">OlÃ¡, <span id="userNameDisplay">UsuÃ¡rio</span>! &#x1F44B;</h1>
+                        <p class="welcome-subtitle">Bem-vindo ao VIMA Studio - Seu assistente de anÃºncios com IA</p>
                     </div>
                 </div>
 
                 <div class="stats-grid" id="statsGrid">
                     <div class="stat-card">
-                        <div class="stat-label">Anúncios Criados</div>
+                        <div class="stat-label">AnÃºncios Criados</div>
                         <div class="stat-value" id="statCreated">0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Créditos Restantes</div>
+                        <div class="stat-label">CrÃ©ditos Restantes</div>
                         <div class="stat-value" id="statCredits">50</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Anúncios Salvos</div>
+                        <div class="stat-label">AnÃºncios Salvos</div>
                         <div class="stat-value" id="statSaved">0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Taxa de Conversão</div>
+                        <div class="stat-label">Taxa de ConversÃ£o</div>
                         <div class="stat-value" id="statConversion">&#x2014;</div>
                     </div>
                 </div>
 
                 <div class="action-buttons">
                     <button class="btn btn-primary btn-large" onclick="app.navigateTo('new-listing')">
-                        &#x2728; Criar Novo Anúncio
+                        &#x2728; Criar Novo AnÃºncio
                     </button>
                 </div>
             </div>
@@ -1058,8 +1058,8 @@
             <div id="new-listing" class="page">
                 <div class="listing-container">
                     <div class="listing-header">
-                        <h1>Criar Novo Anúncio</h1>
-                        <p>Carregue uma foto do seu produto e deixe a IA gerar um anúncio otimizado</p>
+                        <h1>Criar Novo AnÃºncio</h1>
+                        <p>Carregue uma foto do seu produto e deixe a IA gerar um anÃºncio otimizado</p>
                     </div>
 
                     <div class="listing-form">
@@ -1069,7 +1069,7 @@
                             <div class="upload-area" id="uploadArea" ondrop="app.handleDrop(event)" ondragover="app.handleDragOver(event)" ondragleave="app.handleDragLeave(event)" onclick="document.getElementById('photoInput').click()">
                                 <div class="upload-icon">&#x1F4F8;</div>
                                 <div class="upload-text">Arraste sua foto aqui ou clique para selecionar</div>
-                                <div class="upload-hint">Formatos suportados: JPG, PNG, WebP (máx. 5MB)</div>
+                                <div class="upload-hint">Formatos suportados: JPG, PNG, WebP (mÃ¡x. 5MB)</div>
                             </div>
                             <input type="file" id="photoInput" accept="image/*" onchange="app.handlePhotoUpload(event)">
                             <img id="photoPreview" class="image-preview" alt="Preview da foto">
@@ -1088,35 +1088,37 @@
                                     <option value="amazon">Amazon</option>
                                     <option value="shopee">Shopee</option>
                                     <option value="tiktokshop">TikTok Shop</option>
+                                    <option value="shein">Shein</option>
+                                    <option value="instagram">Instagram Shopping</option>
                                 </select>
                             </div>
                         </div>
 
                         <!-- Generate Button -->
                         <button type="button" class="btn btn-primary btn-block" id="generateBtn" onclick="app.generateListing()" disabled>
-                            &#x1F916; Gerar Anúncio com IA
+                            &#x1F916; Gerar AnÃºncio com IA
                         </button>
                     </div>
 
                     <!-- Results Section -->
                     <div class="results-section" id="resultsSection">
-                        <h2 style="margin-bottom: 2rem;">Seu Anúncio Gerado</h2>
+                        <h2 style="margin-bottom: 2rem;">Seu AnÃºncio Gerado</h2>
 
                         <div class="result-field">
-                            <div class="result-label">Título</div>
+                            <div class="result-label">TÃ­tulo</div>
                             <div class="result-value" id="resultTitle">&#x2014;</div>
                             <div class="result-buttons">
-                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultTitle', 'Título')">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultTitle', 'TÃ­tulo')">
                                     &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <div class="result-field">
-                            <div class="result-label">Descrição</div>
+                            <div class="result-label">DescriÃ§Ã£o</div>
                             <div class="result-value" id="resultDescription" style="min-height: 150px; align-items: flex-start; white-space: pre-wrap;">&#x2014;</div>
                             <div class="result-buttons">
-                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultDescription', 'Descrição')">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultDescription', 'DescriÃ§Ã£o')">
                                     &#x1F4CB; Copiar
                                 </button>
                             </div>
@@ -1143,17 +1145,17 @@
                         </div>
 
                         <div class="result-field">
-                            <div class="result-label">Faixa de Preço Sugerida</div>
+                            <div class="result-label">Faixa de PreÃ§o Sugerida</div>
                             <div class="result-value" id="resultPrice">&#x2014;</div>
                             <div class="result-buttons">
-                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultPrice', 'Faixa de Preço')">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultPrice', 'Faixa de PreÃ§o')">
                                     &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <button class="btn btn-primary btn-block" onclick="app.saveListing()" style="margin-top: 2rem;">
-                            &#x1F4BE; Salvar Anúncio
+                            &#x1F4BE; Salvar AnÃºncio
                         </button>
                     </div>
                 </div>
@@ -1163,16 +1165,16 @@
             <div id="my-listings" class="page">
                 <div class="listing-container">
                     <div class="listing-header">
-                        <h1>Meus Anúncios</h1>
-                        <p>Visualize e gerencie todos os seus anúncios salvos</p>
+                        <h1>Meus AnÃºncios</h1>
+                        <p>Visualize e gerencie todos os seus anÃºncios salvos</p>
                     </div>
 
                     <div id="listingsEmpty" class="empty-state">
                         <div class="empty-icon">&#x1F4CB;</div>
-                        <h3 class="empty-title">Nenhum anúncio salvo ainda</h3>
-                        <p class="empty-text">Crie seu primeiro anúncio com a IA para começar</p>
+                        <h3 class="empty-title">Nenhum anÃºncio salvo ainda</h3>
+                        <p class="empty-text">Crie seu primeiro anÃºncio com a IA para comeÃ§ar</p>
                         <button class="btn btn-primary" onclick="app.navigateTo('new-listing')">
-                            Criar Anúncio
+                            Criar AnÃºncio
                         </button>
                     </div>
 
@@ -1184,12 +1186,12 @@
             <div id="settings" class="page">
                 <div class="listing-container">
                     <div class="listing-header">
-                        <h1>Configurações</h1>
-                        <p>Gerencie suas preferências e dados de conta</p>
+                        <h1>ConfiguraÃ§Ãµes</h1>
+                        <p>Gerencie suas preferÃªncias e dados de conta</p>
                     </div>
 
                     <div class="settings-section">
-                        <h3 class="settings-title">Informações da Conta</h3>
+                        <h3 class="settings-title">InformaÃ§Ãµes da Conta</h3>
                         <div class="form-group">
                             <label class="form-label">Nome</label>
                             <input type="text" id="settingsName" disabled>
@@ -1201,20 +1203,20 @@
                     </div>
 
                     <div class="settings-section">
-                        <h3 class="settings-title">Preferências</h3>
+                        <h3 class="settings-title">PreferÃªncias</h3>
                         <div class="form-group">
                             <label class="form-label" for="settingsLanguage">Idioma</label>
                             <select id="settingsLanguage">
-                                <option value="pt-BR" selected>Português (Brasil)</option>
+                                <option value="pt-BR" selected>PortuguÃªs (Brasil)</option>
                                 <option value="en">English</option>
-                                <option value="es">Español</option>
+                                <option value="es">EspaÃ±ol</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="settings-section danger-zone">
                         <h3 class="settings-title danger-title">Zona de Perigo</h3>
-                        <p>Essas ações não podem ser desfeitas.</p>
+                        <p>Essas aÃ§Ãµes nÃ£o podem ser desfeitas.</p>
                         <button class="btn btn-secondary" onclick="app.handleDeleteAccount()" style="border-color: var(--error); color: var(--error);">
                             &#x1F5D1;&#xFE0F; Deletar Conta Permanentemente
                         </button>
@@ -1312,7 +1314,7 @@
 
             updateUserUI() {
                 if (this.currentUser) {
-                    const name = this.currentUser.user_metadata?.name || 'Usuário';
+                    const name = this.currentUser.user_metadata?.name || 'UsuÃ¡rio';
                     document.getElementById('userNameDisplay').textContent = name;
                     document.getElementById('sidebarUserName').textContent = name;
                     document.getElementById('sidebarUserEmail').textContent = this.currentUser.email;
@@ -1445,12 +1447,12 @@
                 }
 
                 if (password !== passwordConfirm) {
-                    this.showToast('As senhas não correspondem', 'error');
+                    this.showToast('As senhas nÃ£o correspondem', 'error');
                     return;
                 }
 
                 if (password.length < 6) {
-                    this.showToast('A senha deve ter no mínimo 6 caracteres', 'error');
+                    this.showToast('A senha deve ter no mÃ­nimo 6 caracteres', 'error');
                     return;
                 }
 
@@ -1473,7 +1475,7 @@
                         throw error;
                     }
 
-                    this.showToast('Conta criada com sucesso! Faça login para continuar.', 'success');
+                    this.showToast('Conta criada com sucesso! FaÃ§a login para continuar.', 'success');
                     setTimeout(() => {
                         window.location.hash = '#login';
                     }, 500);
@@ -1542,7 +1544,7 @@
                     if (file.type.startsWith('image/')) {
                         this.processPhoto(file);
                     } else {
-                        this.showToast('Por favor, carregue uma imagem válida', 'error');
+                        this.showToast('Por favor, carregue uma imagem vÃ¡lida', 'error');
                     }
                 }
             }
@@ -1558,7 +1560,7 @@
                 // Validate file size (5MB max)
                 const maxSize = 5 * 1024 * 1024;
                 if (file.size > maxSize) {
-                    this.showToast('Imagem muito grande. Máximo 5MB.', 'error');
+                    this.showToast('Imagem muito grande. MÃ¡ximo 5MB.', 'error');
                     return;
                 }
 
@@ -1651,14 +1653,50 @@
             }
 
             displayResults(listing) {
-                document.getElementById('resultTitle').textContent = listing.title;
-                document.getElementById('resultDescription').textContent = listing.description;
-                document.getElementById('resultKeywords').textContent = listing.keywords;
-                document.getElementById('resultCategory').textContent = listing.category;
-                document.getElementById('resultPrice').textContent = listing.priceRange;
-
-                document.getElementById('resultsSection').classList.add('active');
-                setTimeout(() => { const container = document.querySelector('.listing-container'); const rs = document.getElementById('resultsSection'); if (container && rs) { container.scrollTo({ top: rs.offsetTop - container.offsetTop - 20, behavior: 'smooth' }); } }, 200);
+                var rs = document.getElementById("resultsSection");
+                var titles = listing.titles || (listing.title ? [listing.title] : []);
+                var desc = listing.description || "";
+                var kw = listing.keywords || "";
+                var cat = listing.category || "";
+                var price = listing.priceRange || listing.price_range || "";
+                var attr = listing.attributes || {};
+                var qual = listing.quality || { score: 70, checks: {} };
+                var scoreColor = qual.score >= 80 ? "#4ade80" : qual.score >= 60 ? "#fbbf24" : "#f87171";
+                var h = "";
+                // Quality Score
+                h += '<div style="background:var(--card-bg);border-radius:12px;padding:1.2rem;margin-bottom:1.5rem;border:1px solid rgba(255,255,255,0.08)">';
+                h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem"><span style="font-weight:600;color:var(--text-primary)">&#x2705; Quality Score</span><span style="font-size:1.5rem;font-weight:700;color:' + scoreColor + '">' + qual.score + '/100</span></div>';
+                h += '<div style="background:rgba(255,255,255,0.1);border-radius:8px;height:8px;overflow:hidden"><div style="height:100%;width:' + qual.score + '%;background:' + scoreColor + ';border-radius:8px;transition:width 1s ease"></div></div>';
+                var checks = qual.checks || {};
+                h += '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.8rem">';
+                var ckLabels = {"titleSEO":"SEO","descriptionComplete":"Descri\u00e7\u00e3o","keywordsRelevant":"Keywords","categoryAccurate":"Categoria","priceRealistic":"Pre\u00e7o"};
+                for (var ck in ckLabels) { var ok = checks[ck]; h += '<span style="padding:0.25rem 0.6rem;border-radius:6px;font-size:0.75rem;background:' + (ok ? "rgba(74,222,128,0.15);color:#4ade80" : "rgba(248,113,113,0.15);color:#f87171") + '">' + (ok ? "&#x2713; " : "&#x2717; ") + ckLabels[ck] + '</span>'; }
+                h += '</div></div>';
+                // 4 Titles
+                h += '<div class="result-card" style="background:var(--card-bg);border-radius:12px;padding:1.2rem;margin-bottom:1rem;border:1px solid rgba(255,255,255,0.08)"><div class="result-card-header" style="font-weight:600;color:var(--accent-primary);margin-bottom:0.8rem">&#x1F3AF; T\u00edtulos SEO Otimizados</div>';
+                titles.forEach(function(t, i) {
+                  h += '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;padding:0.6rem;background:rgba(255,255,255,0.03);border-radius:8px"><span style="min-width:24px;height:24px;border-radius:50%;background:var(--accent-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700">' + (i+1) + '</span><span style="flex:1;color:var(--text-primary);font-size:0.9rem">' + t + '</span><button onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);app.showToast(\'T\u00edtulo copiado!\',\'success\')" style="background:none;border:1px solid rgba(255,255,255,0.15);color:var(--text-secondary);padding:0.3rem 0.6rem;border-radius:6px;cursor:pointer;font-size:0.7rem">Copiar</button></div>';
+                });
+                h += '</div>';
+                // Description
+                h += '<div class="result-card" style="background:var(--card-bg);border-radius:12px;padding:1.2rem;margin-bottom:1rem;border:1px solid rgba(255,255,255,0.08)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem"><span style="font-weight:600;color:var(--accent-primary)">&#x1F4DD; Descri\u00e7\u00e3o</span><button onclick="navigator.clipboard.writeText(document.getElementById(\'descText\').textContent);app.showToast(\'Descri\u00e7\u00e3o copiada!\',\'success\')" style="background:none;border:1px solid rgba(255,255,255,0.15);color:var(--text-secondary);padding:0.3rem 0.6rem;border-radius:6px;cursor:pointer;font-size:0.7rem">Copiar</button></div><div id="descText" style="color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;font-size:0.9rem">' + desc + '</div></div>';
+                // Keywords
+                h += '<div class="result-card" style="background:var(--card-bg);border-radius:12px;padding:1.2rem;margin-bottom:1rem;border:1px solid rgba(255,255,255,0.08)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem"><span style="font-weight:600;color:var(--accent-primary)">&#x1F50D; Keywords</span><button onclick="navigator.clipboard.writeText(document.getElementById(\'kwText\').textContent);app.showToast(\'Keywords copiadas!\',\'success\')" style="background:none;border:1px solid rgba(255,255,255,0.15);color:var(--text-secondary);padding:0.3rem 0.6rem;border-radius:6px;cursor:pointer;font-size:0.7rem">Copiar</button></div><div id="kwText" style="color:var(--text-secondary);font-size:0.9rem">' + kw + '</div></div>';
+                // Category & Price row
+                h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">';
+                h += '<div style="background:var(--card-bg);border-radius:12px;padding:1.2rem;border:1px solid rgba(255,255,255,0.08)"><div style="font-weight:600;color:var(--accent-primary);margin-bottom:0.5rem">&#x1F4C1; Categoria</div><div style="color:var(--text-secondary);font-size:0.9rem">' + cat + '</div></div>';
+                h += '<div style="background:var(--card-bg);border-radius:12px;padding:1.2rem;border:1px solid rgba(255,255,255,0.08)"><div style="font-weight:600;color:var(--accent-primary);margin-bottom:0.5rem">&#x1F4B0; Pre\u00e7o Sugerido</div><div style="color:#4ade80;font-size:1.1rem;font-weight:600">' + price + '</div></div>';
+                h += '</div>';
+                // Attributes
+                if (attr.brand || attr.color || attr.material || attr.size || attr.condition) {
+                  h += '<div style="background:var(--card-bg);border-radius:12px;padding:1.2rem;margin-bottom:1rem;border:1px solid rgba(255,255,255,0.08)"><div style="font-weight:600;color:var(--accent-primary);margin-bottom:0.8rem">&#x1F4CB; Atributos do Produto</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">';
+                  var attrLabels = {"brand":"Marca","color":"Cor","material":"Material","size":"Tamanho","condition":"Condi\u00e7\u00e3o"};
+                  for (var ak in attrLabels) { if (attr[ak]) { h += '<div style="padding:0.5rem;background:rgba(255,255,255,0.03);border-radius:6px"><span style="font-size:0.75rem;color:var(--text-muted);display:block">' + attrLabels[ak] + '</span><span style="color:var(--text-primary);font-size:0.85rem">' + attr[ak] + '</span></div>'; } }
+                  h += '</div></div>';
+                }
+                rs.innerHTML = h;
+                rs.classList.add("active");
+                setTimeout(function() { var container = document.querySelector(".listing-container"); if (container && rs) { container.scrollTo({ top: rs.offsetTop - container.offsetTop - 20, behavior: "smooth" }); } }, 200);
             }
 
             copyToClipboard(elementId, fieldName) {
@@ -1666,7 +1704,7 @@
                 const text = element.textContent;
 
                 navigator.clipboard.writeText(text).then(() => {
-                    this.showToast(`${fieldName} copiado para a área de transferência!`, 'success');
+                    this.showToast(`${fieldName} copiado para a Ã¡rea de transferÃªncia!`, 'success');
                 }).catch(() => {
                     // Fallback
                     const textarea = document.createElement('textarea');
@@ -1675,13 +1713,13 @@
                     textarea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textarea);
-                    this.showToast(`${fieldName} copiado para a área de transferência!`, 'success');
+                    this.showToast(`${fieldName} copiado para a Ã¡rea de transferÃªncia!`, 'success');
                 });
             }
 
             async saveListing() {
                 if (!this.currentListing.result) {
-                    this.showToast('Nenhum anúncio gerado para salvar', 'error');
+                    this.showToast('Nenhum anÃºncio gerado para salvar', 'error');
                     return;
                 }
 
@@ -1702,7 +1740,7 @@
                 saved.push(listing);
                 localStorage.setItem('vima_listings', JSON.stringify(saved));
 
-                this.showToast('Anúncio salvo com sucesso!', 'success');
+                this.showToast('AnÃºncio salvo com sucesso!', 'success');
 
                 // Reset form
                 setTimeout(() => {
@@ -1785,7 +1823,7 @@
             }
 
             deleteListing(index) {
-                if (!confirm('Tem certeza que deseja deletar este anúncio?')) {
+                if (!confirm('Tem certeza que deseja deletar este anÃºncio?')) {
                     return;
                 }
 
@@ -1793,7 +1831,7 @@
                 listings.splice(listings.length - 1 - index, 1);
                 localStorage.setItem('vima_listings', JSON.stringify(listings));
 
-                this.showToast('Anúncio deletado com sucesso', 'success');
+                this.showToast('AnÃºncio deletado com sucesso', 'success');
                 this.loadMyListings();
             }
 
@@ -1802,7 +1840,7 @@
             // ================================================================
 
             async handleDeleteAccount() {
-                const confirmed = confirm('Tem certeza? Esta ação não pode ser desfeita. Todos os seus dados serão deletados permanentemente.');
+                const confirmed = confirm('Tem certeza? Esta aÃ§Ã£o nÃ£o pode ser desfeita. Todos os seus dados serÃ£o deletados permanentemente.');
 
                 if (!confirmed) {
                     return;
@@ -1858,7 +1896,7 @@
                 toast.innerHTML = `
                     <div class="toast-icon">${icons[type] || icons.info}</div>
                     <div class="toast-message">${message}</div>
-                    <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+                    <button class="toast-close" onclick="this.parentElement.remove()">Ã</button>
                 `;
 
                 container.appendChild(toast);
