@@ -2153,6 +2153,150 @@
                 });
             }
 
+        async removeBg() {
+            if (!this.currentListing || !this.currentListing.imageBase64) {
+                this.showToast('Nenhuma imagem carregada', 'error');
+                return;
+            }
+            var section = document.getElementById('removeBgSection');
+            section.style.display = 'block';
+            var resultDiv = document.getElementById('removeBgResult');
+            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;"><div class="loading-spinner"></div><p style="margin-top:1rem;color:var(--text-secondary);">Removendo fundo da imagem...</p></div>';
+            var tolerance = document.getElementById('bgTolerance') ? document.getElementById('bgTolerance').value : 35;
+            try {
+                var response = await fetch(this.apiBase + '/api/remove-bg', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageBase64: this.currentListing.imageBase64, tolerance: parseInt(tolerance), edgeSoftness: 8 })
+                });
+                var data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Erro ao remover fundo');
+                this.displayRemoveBg(data.images);
+            } catch (err) {
+                resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">Erro: ' + err.message + '</div>';
+            }
+        }
+
+        displayRemoveBg(images) {
+            var resultDiv = document.getElementById('removeBgResult');
+            var bg = images.detectedBg;
+            var bgColor = 'rgb(' + bg.r + ',' + bg.g + ',' + bg.b + ')';
+            var h = '<p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem;">Cor detectada: <span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;border:1px solid var(--border);background:' + bgColor + '"></span> RGB(' + bg.r + ',' + bg.g + ',' + bg.b + ')</p>';
+            h += '<div class="removebg-result">';
+            h += '<div class="removebg-card"><div class="checkerboard"><img src="' + images.transparent + '" alt="Fundo transparente"></div>';
+            h += '<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem;">Fundo Transparente (PNG)</p>';
+            h += '<button class="btn-action" style="padding:0.4rem 1rem;font-size:0.8rem;width:100%;" onclick="app.downloadRemoveBgImage(0)">Download PNG</button></div>';
+            h += '<div class="removebg-card"><img src="' + images.whiteBg + '" alt="Fundo branco">';
+            h += '<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem;">Fundo Branco (JPEG)</p>';
+            h += '<button class="btn-action" style="padding:0.4rem 1rem;font-size:0.8rem;width:100%;" onclick="app.downloadRemoveBgImage(1)">Download JPEG</button></div>';
+            h += '</div>';
+            resultDiv.innerHTML = h;
+            this.currentRemoveBgImages = images;
+            this.showToast('Fundo removido com sucesso!', 'success');
+        }
+
+        downloadRemoveBgImage(type) {
+            var images = this.currentRemoveBgImages;
+            if (!images) return;
+            var a = document.createElement('a');
+            if (type === 0) { a.href = images.transparent; a.download = 'produto-sem-fundo.png'; }
+            else { a.href = images.whiteBg; a.download = 'produto-fundo-branco.jpg'; }
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+
+        async generateInfluencer() {
+            if (!this.currentListing) { this.showToast('Gere um anuncio primeiro', 'error'); return; }
+            var section = document.getElementById('influencerSection');
+            section.style.display = 'block';
+            var resultDiv = document.getElementById('influencerResult');
+            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;"><div class="loading-spinner"></div><p style="margin-top:1rem;color:var(--text-secondary);">Gerando conteudo de influencer...</p></div>';
+            var platform = document.getElementById('influencerPlatform').value;
+            var tone = document.getElementById('influencerTone').value;
+            try {
+                var response = await fetch(this.apiBase + '/api/generate-influencer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ listing: this.currentListing, platform: platform, tone: tone })
+                });
+                var data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Erro ao gerar conteudo');
+                this.currentInfluencer = data.influencer;
+                this.displayInfluencer(data.influencer);
+            } catch (err) {
+                resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">Erro: ' + err.message + '</div>';
+            }
+        }
+
+
+        displayInfluencer(inf) {
+            var resultDiv = document.getElementById('influencerResult');
+            var h = '';
+            if (inf.hook) {
+                h += '<div class="influencer-content"><h4>&#x1F3A3; Gancho</h4>';
+                h += '<pre id="inf_hook">' + this.escHtml(inf.hook) + '</pre>';
+                h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.5rem;" onclick="app.copyElText(&#39;inf_hook&#39;)">Copiar</button>';
+                h += '</div>';
+            }
+            h += '<div class="influencer-content"><h4>&#x1F4DD; Conteudo Principal</h4>';
+            h += '<pre id="inf_main">' + this.escHtml(inf.mainContent) + '</pre>';
+            h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.5rem;" onclick="app.copyElText(&#39;inf_main&#39;)">Copiar Conteudo</button>';
+            h += '</div>';
+            if (inf.cta) {
+                h += '<div class="influencer-content"><h4>&#x1F4E2; CTA</h4>';
+                h += '<pre>' + this.escHtml(inf.cta) + '</pre></div>';
+            }
+            if (inf.hashtags && inf.hashtags.length > 0) {
+                h += '<div class="influencer-content"><h4># Hashtags</h4>';
+                h += '<div class="influencer-hashtags">';
+                var allTags = '';
+                for (var i = 0; i < inf.hashtags.length; i++) {
+                    var tag = inf.hashtags[i];
+                    if (tag.charAt(0) !== '#') tag = '#' + tag;
+                    h += '<span>' + tag + '</span>';
+                    allTags += (i > 0 ? ' ' : '') + tag;
+                }
+                h += '</div>';
+                h += '<input type="hidden" id="inf_tags" value="' + this.escHtml(allTags) + '">';
+                h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.75rem;" onclick="app.copyElVal(&#39;inf_tags&#39;)">Copiar Hashtags</button>';
+                h += '</div>';
+            }
+            if (inf.alternativeVersions && inf.alternativeVersions.length > 0) {
+                h += '<div class="alt-versions"><h4 style="color:var(--accent);margin-bottom:0.75rem;">&#x1F504; Versoes Alternativas</h4>';
+                for (var j = 0; j < inf.alternativeVersions.length; j++) {
+                    var v = inf.alternativeVersions[j];
+                    h += '<div class="alt-version-card"><h5>' + this.escHtml(v.label) + '</h5>';
+                    h += '<pre id="inf_alt' + j + '">' + this.escHtml(v.content || '') + '</pre>';
+                    h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.5rem;" onclick="app.copyElText(&#39;inf_alt' + j + '&#39;)">Copiar</button>';
+                    h += '</div>';
+                }
+                h += '</div>';
+            }
+            h += '<div class="influencer-meta">';
+            if (inf.suggestedVisual) { h += '<div class="influencer-meta-card"><h5>&#x1F4F7; Visual Sugerido</h5><p>' + this.escHtml(inf.suggestedVisual) + '</p></div>'; }
+            if (inf.bestTimeToPost) { h += '<div class="influencer-meta-card"><h5>&#x23F0; Melhor Horario</h5><p>' + this.escHtml(inf.bestTimeToPost) + '</p></div>'; }
+            if (inf.estimatedEngagement) { h += '<div class="influencer-meta-card"><h5>&#x1F4CA; Engajamento Estimado</h5><p>' + this.escHtml(inf.estimatedEngagement) + '</p></div>'; }
+            h += '</div>';
+            resultDiv.innerHTML = h;
+            this.showToast('Conteudo de influencer gerado!', 'success');
+        }
+
+        escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        copyElText(id) {
+            var el = document.getElementById(id);
+            if (el) this.copyText(el.textContent);
+        }
+
+        copyElVal(id) {
+            var el = document.getElementById(id);
+            if (el) this.copyText(el.value);
+        }
+
+
+
             copyToClipboard(elementId, fieldName) {
                 const element = document.getElementById(elementId);
                 const text = element.textContent;
@@ -2199,174 +2343,7 @@
                 // Reset form
                 setTimeout(() => {
                     this.resetListingForm();
-                },
-
-        async removeBg() {
-            if (!this.currentListing || !this.currentListing.imageBase64) {
-                this.showToast('Nenhuma imagem carregada', 'error');
-                return;
-            }
-            var section = document.getElementById('removeBgSection');
-            section.style.display = 'block';
-            var resultDiv = document.getElementById('removeBgResult');
-            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;"><div class="loading-spinner"></div><p style="margin-top:1rem;color:var(--text-secondary);">Removendo fundo da imagem...</p></div>';
-            
-            var tolerance = document.getElementById('bgTolerance') ? document.getElementById('bgTolerance').value : 35;
-            
-            try {
-                var response = await fetch(this.apiBase + '/api/remove-bg', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        imageBase64: this.currentListing.imageBase64,
-                        tolerance: parseInt(tolerance),
-                        edgeSoftness: 8
-                    })
-                });
-                var data = await response.json();
-                if (!data.success) throw new Error(data.error || 'Erro ao remover fundo');
-                this.displayRemoveBg(data.images);
-            } catch (err) {
-                resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">Erro: ' + err.message + '</div>';
-            }
-        },
-
-        displayRemoveBg(images) {
-            var resultDiv = document.getElementById('removeBgResult');
-            var bg = images.detectedBg;
-            var bgColor = 'rgb(' + bg.r + ',' + bg.g + ',' + bg.b + ')';
-            var h = '<p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem;">Cor detectada: <span style="display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;border:1px solid var(--border);background:' + bgColor + '"></span> RGB(' + bg.r + ',' + bg.g + ',' + bg.b + ')</p>';
-            h += '<div class="removebg-result">';
-            h += '<div class="removebg-card"><div class="checkerboard"><img src="' + images.transparent + '" alt="Fundo transparente"></div>';
-            h += '<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem;">Fundo Transparente (PNG)</p>';
-            h += '<button class="btn-action" style="padding:0.4rem 1rem;font-size:0.8rem;width:100%;" onclick="app.downloadRemoveBgImage(0)">Download PNG</button></div>';
-            h += '<div class="removebg-card"><img src="' + images.whiteBg + '" alt="Fundo branco">';
-            h += '<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem;">Fundo Branco (JPEG)</p>';
-            h += '<button class="btn-action" style="padding:0.4rem 1rem;font-size:0.8rem;width:100%;" onclick="app.downloadRemoveBgImage(1)">Download JPEG</button></div>';
-            h += '</div>';
-            resultDiv.innerHTML = h;
-            this.currentRemoveBgImages = images;
-            this.showToast('Fundo removido com sucesso!', 'success');
-        },
-
-        downloadRemoveBgImage(type) {
-            var images = this.currentRemoveBgImages;
-            if (!images) return;
-            var a = document.createElement('a');
-            if (type === 0) {
-                a.href = images.transparent;
-                a.download = 'produto-sem-fundo.png';
-            } else {
-                a.href = images.whiteBg;
-                a.download = 'produto-fundo-branco.jpg';
-            }
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        },
-
-        async generateInfluencer() {
-            if (!this.currentListing) {
-                this.showToast('Gere um anuncio primeiro', 'error');
-                return;
-            }
-            var section = document.getElementById('influencerSection');
-            section.style.display = 'block';
-            var resultDiv = document.getElementById('influencerResult');
-            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;"><div class="loading-spinner"></div><p style="margin-top:1rem;color:var(--text-secondary);">Gerando conteudo de influencer...</p></div>';
-            
-            var platform = document.getElementById('influencerPlatform').value;
-            var tone = document.getElementById('influencerTone').value;
-            
-            try {
-                var response = await fetch(this.apiBase + '/api/generate-influencer', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        listing: this.currentListing,
-                        platform: platform,
-                        tone: tone
-                    })
-                });
-                var data = await response.json();
-                if (!data.success) throw new Error(data.error || 'Erro ao gerar conteudo');
-                this.displayInfluencer(data.influencer);
-            } catch (err) {
-                resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">Erro: ' + err.message + '</div>';
-            }
-        },
-
-        displayInfluencer(inf) {
-            var resultDiv = document.getElementById('influencerResult');
-            var h = '';
-            
-            // Hook
-            if (inf.hook) {
-                h += '<div class="influencer-content"><h4>&#x1F3A3; Gancho</h4>';
-                h += '<pre>' + inf.hook + '</pre>';
-                h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.5rem;" onclick="app.copyText(document.getElementById('infHook').textContent)">Copiar</button>';
-                h += '<span id="infHook" style="display:none;">' + inf.hook.replace(/</g, '&lt;') + '</span>';
-                h += '</div>';
-            }
-            
-            // Main Content
-            h += '<div class="influencer-content"><h4>&#x1F4DD; Conteudo Principal</h4>';
-            h += '<pre id="infMainPre">' + inf.mainContent.replace(/</g, '&lt;') + '</pre>';
-            h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.5rem;" onclick="app.copyText(document.getElementById('infMainPre').textContent)">Copiar Conteudo</button>';
-            h += '</div>';
-            
-            // CTA
-            if (inf.cta) {
-                h += '<div class="influencer-content"><h4>&#x1F4E2; CTA (Chamada para Acao)</h4>';
-                h += '<pre>' + inf.cta.replace(/</g, '&lt;') + '</pre></div>';
-            }
-            
-            // Hashtags
-            if (inf.hashtags && inf.hashtags.length > 0) {
-                h += '<div class="influencer-content"><h4>&#x0023; Hashtags</h4>';
-                h += '<div class="influencer-hashtags">';
-                for (var i = 0; i < inf.hashtags.length; i++) {
-                    var tag = inf.hashtags[i];
-                    if (tag.charAt(0) !== '#') tag = '#' + tag;
-                    h += '<span>' + tag + '</span>';
-                }
-                h += '</div>';
-                var allTags = inf.hashtags.map(function(t) { return t.charAt(0) === '#' ? t : '#' + t; }).join(' ');
-                h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.75rem;" onclick="app.copyText('' + allTags.replace(/'/g, "\'") + '')">Copiar Hashtags</button>';
-                h += '</div>';
-            }
-            
-            // Alternative versions
-            if (inf.alternativeVersions && inf.alternativeVersions.length > 0) {
-                h += '<div class="alt-versions"><h4 style="color:var(--accent);margin-bottom:0.75rem;">&#x1F504; Versoes Alternativas</h4>';
-                for (var j = 0; j < inf.alternativeVersions.length; j++) {
-                    var v = inf.alternativeVersions[j];
-                    h += '<div class="alt-version-card"><h5>' + v.label + '</h5>';
-                    h += '<pre id="altV' + j + '">' + (v.content || '').replace(/</g, '&lt;') + '</pre>';
-                    h += '<button class="btn-action" style="padding:0.3rem 0.75rem;font-size:0.75rem;margin-top:0.5rem;" onclick="app.copyText(document.getElementById('altV' + j + '').textContent)">Copiar</button>';
-                    h += '</div>';
-                }
-                h += '</div>';
-            }
-            
-            // Meta info
-            h += '<div class="influencer-meta">';
-            if (inf.suggestedVisual) {
-                h += '<div class="influencer-meta-card"><h5>&#x1F4F7; Visual Sugerido</h5><p>' + inf.suggestedVisual.replace(/</g, '&lt;') + '</p></div>';
-            }
-            if (inf.bestTimeToPost) {
-                h += '<div class="influencer-meta-card"><h5>&#x23F0; Melhor Horario</h5><p>' + inf.bestTimeToPost.replace(/</g, '&lt;') + '</p></div>';
-            }
-            if (inf.estimatedEngagement) {
-                h += '<div class="influencer-meta-card"><h5>&#x1F4CA; Engajamento Estimado</h5><p>' + inf.estimatedEngagement.replace(/</g, '&lt;') + '</p></div>';
-            }
-            h += '</div>';
-            
-            resultDiv.innerHTML = h;
-            this.showToast('Conteudo de influencer gerado!', 'success');
-        },
-
- 500);
+                }, 500);
             }
 
             resetListingForm() {
