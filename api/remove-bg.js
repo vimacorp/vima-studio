@@ -1,5 +1,96 @@
 import sharp from 'sharp';
 
+const PHOTOROOM_API_URL = 'https://sdk.photoroom.com/v1/segment';
+const FREEPIK_API_URL = 'https://api.freepik.com/v1/ai/remove-background';
+
+async function handlePhotoroom(base64Data) {
+  const response = await fetch(PHOTOROOM_API_URL, {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.PHOTOROOM_API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      image_file_b64: base64Data
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Photoroom API error: ${response.status} - ${error}`);
+  }
+
+  const result = await response.json();
+  return result.result_b64;
+}
+
+async function handleFreepik(base64Data) {
+  const response = await fetch(FREEPIK_API_URL, {
+    method: 'POST',
+    headers: {
+      'x-freepik-api-key': process.env.FREEPIK_API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      image: base64Data
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Freepik API error: ${response.status} - ${error}`);
+  }
+
+  const result = await response.json();
+  return result.image || result.data?.image;
+}
+
+async function handleSharpFallback(base64Data) {
+  const imageBuffer = Buffer.from(base64Data, 'base64');
+
+  const { data, info } = await sharp(imageBuffer)
+    .raw()
+    .ensureAlpha()
+    .toBuffer({ resolveWithObject: true });
+
+  const pixels = new Uint8Array(data);
+  const threshold = 230;
+  const edgeBlur = 2;
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+    if (r > threshold && g > threshold && b > threshold) {
+      pixels[i + 3] = 0;
+    }
+  }
+
+  const transparentBuffer = await sharp(Buffer.from(pixels), {
+    raw: { width: info.width, height: info.height, channels: 4 }
+  }).png().toBuffer();
+
+  return transparentBuffer.toString('base64');
+}
+
+async function addWhiteBackground(transparentBase64) {
+  const buffer = Buffer.from(transparentBase64, 'base64');
+  const image = sharp(buffer);
+  const metadata = await image.metadata();
+
+  const whiteBuffer = await sharp({
+    create: {
+      width: metadata.width,
+      height: metadata.height,
+      channels: 4,
+      background: { r: 255, g: 255, b: 255, alpha: 1 }
+    }
+  })
+    .composite([{ input: buffer, blend: 'over' }])
+    .jpeg({ quality: 95 })
+    .toBuffer();
+
+  return whiteBuffer.toString('base64');
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -9,107 +100,52 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    var { imageBase64, tolerance, edgeSoftness } = req.body;
-    tolerance = tolerance || 35;
-    edgeSoftness = edgeSoftness || 8;
-    if (!imageBase64) return res.status(400).json({ error: 'Missing imageBase64' });
+    const { imageBase64 } = req.body;
 
-    var base64Data = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
-    var imageBuffer = Buffer.from(base64Data, 'base64');
-
-    var raw = await sharp(imageBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-    var pixels = new Uint8Array(raw.data);
-    var width = raw.info.width;
-    var height = raw.info.height;
-    var channels = raw.info.channels;
-
-    // Sample background color from edges
-    var sampleSize = Math.min(20, Math.floor(width * 0.05));
-    var rSum = 0, gSum = 0, bSum = 0, count = 0;
-
-    function samplePixel(x, y) {
-      var idx = (y * width + x) * channels;
-      rSum += pixels[idx]; gSum += pixels[idx+1]; bSum += pixels[idx+2]; count++;
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'imageBase64 is required' });
     }
 
-    for (var ci = 0; ci < sampleSize; ci++) {
-      for (var cj = 0; cj < sampleSize; cj++) {
-        samplePixel(ci, cj);
-        samplePixel(width-1-ci, cj);
-        samplePixel(ci, height-1-cj);
-        samplePixel(width-1-ci, height-1-cj);
-      }
-    }
-    for (var ex = 0; ex < width; ex += Math.max(1, Math.floor(width/100))) {
-      for (var row = 0; row < 3; row++) { samplePixel(ex, row); samplePixel(ex, height-1-row); }
-    }
-    for (var ey = 0; ey < height; ey += Math.max(1, Math.floor(height/100))) {
-      for (var col = 0; col < 3; col++) { samplePixel(col, ey); samplePixel(width-1-col, ey); }
-    }
+    const base64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-    var bgR = Math.round(rSum/count);
-    var bgG = Math.round(gSum/count);
-    var bgB = Math.round(bSum/count);
-    var tol = Number(tolerance);
-    var soft = Number(edgeSoftness);
-    var result = Buffer.from(pixels);
+    let transparentBase64;
+    let provider = 'sharp-fallback';
 
-    // Initial pass - mark potential background pixels
-    for (var pi = 0; pi < pixels.length; pi += channels) {
-      var dist = Math.sqrt(Math.pow(pixels[pi]-bgR,2) + Math.pow(pixels[pi+1]-bgG,2) + Math.pow(pixels[pi+2]-bgB,2));
-      if (dist < tol) result[pi+3] = 0;
-      else if (dist < tol + soft) result[pi+3] = Math.round(((dist-tol)/soft)*255);
-      else result[pi+3] = 255;
-    }
-
-    // Flood fill from edges - only remove connected background
-    var visited = new Uint8Array(width * height);
-    var isBackground = new Uint8Array(width * height);
-    var queue = [];
-    for (var fx = 0; fx < width; fx++) { queue.push(fx); queue.push((height-1)*width+fx); }
-    for (var fy = 1; fy < height-1; fy++) { queue.push(fy*width); queue.push(fy*width+width-1); }
-
-    var qi = 0;
-    while (qi < queue.length) {
-      var pos = queue[qi++];
-      if (visited[pos]) continue;
-      visited[pos] = 1;
-      if (result[pos*channels+3] < 128) {
-        isBackground[pos] = 1;
-        var bx = pos % width;
-        var by = Math.floor(pos / width);
-        if (bx > 0 && !visited[pos-1]) queue.push(pos-1);
-        if (bx < width-1 && !visited[pos+1]) queue.push(pos+1);
-        if (by > 0 && !visited[pos-width]) queue.push(pos-width);
-        if (by < height-1 && !visited[pos+width]) queue.push(pos+width);
+    // Priority: Photoroom > Freepik > Sharp fallback
+    if (process.env.PHOTOROOM_API_KEY) {
+      try {
+        transparentBase64 = await handlePhotoroom(base64);
+        provider = 'photoroom';
+      } catch (e) {
+        console.error('Photoroom failed, trying Freepik:', e.message);
       }
     }
 
-    // Final pass
-    for (var fi = 0; fi < width*height; fi++) {
-      var px = fi * channels;
-      if (isBackground[fi]) {
-        var d = Math.sqrt(Math.pow(pixels[px]-bgR,2)+Math.pow(pixels[px+1]-bgG,2)+Math.pow(pixels[px+2]-bgB,2));
-        if (d < tol) result[px+3] = 0;
-        else if (d < tol+soft) result[px+3] = Math.round(((d-tol)/soft)*255);
-      } else {
-        result[px+3] = 255;
+    if (!transparentBase64 && process.env.FREEPIK_API_KEY) {
+      try {
+        transparentBase64 = await handleFreepik(base64);
+        provider = 'freepik';
+      } catch (e) {
+        console.error('Freepik failed, trying Sharp fallback:', e.message);
       }
     }
 
-    var transparentPng = await sharp(result, { raw: { width, height, channels: 4 } }).png().toBuffer();
-    var whiteBgJpeg = await sharp(result, { raw: { width, height, channels: 4 } }).flatten({ background: { r: 255, g: 255, b: 255 } }).jpeg({ quality: 92 }).toBuffer();
+    if (!transparentBase64) {
+      transparentBase64 = await handleSharpFallback(base64);
+      provider = 'sharp-fallback';
+    }
+
+    // Generate white background version for marketplace use
+    const whiteBase64 = await addWhiteBackground(transparentBase64);
 
     return res.status(200).json({
-      success: true,
-      images: {
-        transparent: 'data:image/png;base64,' + transparentPng.toString('base64'),
-        whiteBg: 'data:image/jpeg;base64,' + whiteBgJpeg.toString('base64'),
-        detectedBg: { r: bgR, g: bgG, b: bgB }
-      }
+      transparentImage: `data:image/png;base64,${transparentBase64}`,
+      whiteBackground: `data:image/jpeg;base64,${whiteBase64}`,
+      provider
     });
+
   } catch (error) {
-    console.error('BG removal error:', error);
-    return res.status(500).json({ success: false, error: 'Background removal failed', message: error.message });
+    console.error('Remove BG error:', error);
+    return res.status(500).json({ error: 'Erro ao remover fundo', details: error.message });
   }
 }
