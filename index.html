@@ -1,4 +1,109 @@
 <!DOC
+    updateDownloadHub() {
+        var hub = document.getElementById('downloadHub');
+        var cats = document.getElementById('downloadCategories');
+        var nav = document.getElementById('quickNav');
+        var items = [];
+
+        // Collect listing text
+        if (this.currentListing) {
+            items.push({ cat: 'An\u00fancio', icon: '\u{1F4DD}', files: [
+                { name: 'listing.txt', type: 'text', data: this.currentListing.title + '\n\n' + this.currentListing.description }
+            ]});
+        }
+
+        // Collect processed images
+        var imgSection = document.getElementById('imageGallerySection');
+        if (imgSection && imgSection.style.display !== 'none') {
+            var imgs = imgSection.querySelectorAll('img[src^="data:"]');
+            var imgFiles = [];
+            imgs.forEach(function(img, i) { imgFiles.push({ name: 'imagem-' + (i+1) + '.jpg', type: 'image', data: img.src }); });
+            if (imgFiles.length) items.push({ cat: 'Imagens', icon: '\u{1F5BC}', files: imgFiles });
+        }
+
+        // Collect remove bg images
+        var rbResult = document.getElementById('removeBgResult');
+        if (rbResult) {
+            var rbImgs = rbResult.querySelectorAll('img[src^="data:"]');
+            var rbFiles = [];
+            rbImgs.forEach(function(img, i) { rbFiles.push({ name: 'sem-fundo-' + (i+1) + '.png', type: 'image', data: img.src }); });
+            if (rbFiles.length) items.push({ cat: 'Sem Fundo', icon: '\u2702', files: rbFiles });
+        }
+
+        // Collect scenes
+        if (this.generatedScenes && this.generatedScenes.length) {
+            var scFiles = this.generatedScenes.map(function(s) { return { name: 'cenario-' + s.id + '.jpg', type: 'image', data: s.image }; });
+            items.push({ cat: 'Cen\u00e1rios', icon: '\u{1F3A8}', files: scFiles });
+        }
+
+        if (items.length === 0) {
+            hub.style.display = 'none';
+            nav.style.display = 'none';
+            return;
+        }
+
+        hub.style.display = 'block';
+        nav.style.display = 'block';
+        cats.innerHTML = '';
+
+        var totalFiles = 0;
+        items.forEach(function(item) {
+            totalFiles += item.files.length;
+            var card = document.createElement('div');
+            card.style.cssText = 'background:rgba(30,41,59,0.5);border-radius:12px;padding:1.25rem;border:1px solid rgba(148,163,184,0.1);';
+            var filesHtml = item.files.map(function(f, i) {
+                return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid rgba(148,163,184,0.05);"><span style="color:#cbd5e1;font-size:0.85rem;">' + f.name + '</span><button onclick="app.downloadHubFile(this)" data-src="' + (f.type === 'text' ? '' : '1') + '" data-name="' + f.name + '" style="background:#3b82f6;color:white;border:none;padding:0.3rem 0.8rem;border-radius:6px;font-size:0.75rem;cursor:pointer;">Baixar</button></div>';
+            }).join('');
+            card.innerHTML = '<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;"><span style="font-size:1.5rem;">' + item.icon + '</span><div><h4 style="color:#e2e8f0;margin:0;">' + item.cat + '</h4><span style="color:#64748b;font-size:0.8rem;">' + item.files.length + ' arquivo(s)</span></div></div>' + filesHtml;
+            cats.appendChild(card);
+        });
+
+        this._hubItems = items;
+    }
+
+    downloadHubFile(btn) {
+        var name = btn.getAttribute('data-name');
+        var items = this._hubItems || [];
+        for (var item of items) {
+            for (var f of item.files) {
+                if (f.name === name) {
+                    var a = document.createElement('a');
+                    if (f.type === 'text') {
+                        a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(f.data);
+                    } else {
+                        a.href = f.data;
+                    }
+                    a.download = f.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    return;
+                }
+            }
+        }
+    }
+
+    async downloadAllZip() {
+        this.showToast('Preparando downloads individuais...', 'info');
+        var items = this._hubItems || [];
+        for (var item of items) {
+            for (var f of item.files) {
+                var a = document.createElement('a');
+                if (f.type === 'text') {
+                    a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(f.data);
+                } else {
+                    a.href = f.data;
+                }
+                a.download = f.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                await new Promise(function(r) { setTimeout(r, 300); });
+            }
+        }
+        this.showToast('Todos os arquivos baixados!', 'success');
+    }
+
     async generateScenes() {
         if (!this.uploadedImage) {
             this.showToast('Fa\u00e7a upload de uma imagem primeiro', 'error');
@@ -23,6 +128,7 @@
             loading.style.display = 'none';
             this.displayScenes(data.scenes);
             this.showToast(data.scenes.length + ' cen\u00e1rios gerados com sucesso!', 'success');
+            this.updateDownloadHub();
         } catch (err) {
             loading.style.display = 'none';
             grid.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;grid-column:1/-1;">Erro: ' + err.message + '</div>';
@@ -1487,6 +1593,16 @@ TYPE html>
                     <p style="color: #94a3b8; margin-top: 1rem;">Gerando cen&#x00E1;rios... Isso pode levar at&#x00E9; 30 segundos</p>
                 </div>
             </div>
+            <div id="downloadHub" style="display:none;" class="result-section">
+                <h2 style="margin-bottom: 0.5rem; color: #e2e8f0;">&#x1F4E6; Central de Downloads</h2>
+                <p style="color: #94a3b8; margin-bottom: 1.5rem;">Todos os seus arquivos gerados em um s&#x00F3; lugar</p>
+                <div id="downloadHubContent">
+                    <div id="downloadCategories" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;"></div>
+                </div>
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <button onclick="app.downloadAllZip()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 1rem 2.5rem; border-radius: 10px; font-size: 1.1rem; font-weight: 700; cursor: pointer;">&#x1F4E5; Baixar Tudo (ZIP)</button>
+                </div>
+            </div>
 
     
                 </div>
@@ -1967,6 +2083,7 @@ TYPE html>
                     this.currentListing.result = data.listing;
                     this.displayResults(data.listing);
                     this.showToast('Anuncio gerado com sucesso pela IA!', 'success');
+            this.updateDownloadHub();
 
                 } catch (error) {
                     console.error('Generation error:', error);
@@ -2057,6 +2174,7 @@ TYPE html>
                     this.currentListing.images = data.images;
                     this.displayImageGallery(data.images);
                     this.showToast("Imagens geradas com sucesso!", "success");
+            this.updateDownloadHub();
                 } catch (error) {
                     this.showToast("Erro ao gerar imagens: " + error.message, "error");
                 } finally {
@@ -2122,6 +2240,7 @@ TYPE html>
                     this.currentListing.video = data.video;
                     this.displayVideoPreview(data.video);
                     this.showToast("Roteiro de video gerado!", "success");
+            this.updateDownloadHub();
                 } catch (error) {
                     this.showToast("Erro ao gerar video: " + error.message, "error");
                 } finally {
@@ -2277,6 +2396,7 @@ TYPE html>
             resultDiv.innerHTML = h;
             this.currentRemoveBgImages = images;
             this.showToast('Fundo removido com sucesso!', 'success');
+            this.updateDownloadHub();
         }
 
         downloadRemoveBgImage(type) {
@@ -2362,6 +2482,7 @@ TYPE html>
             h += '</div>';
             resultDiv.innerHTML = h;
             this.showToast('Conteudo de influencer gerado!', 'success');
+            this.updateDownloadHub();
         }
 
         escHtml(str) {
@@ -2596,5 +2717,17 @@ TYPE html>
             app = new VimaApp();
         });
     </script>
+
+    <div id="quickNav" style="display:none; position:fixed; right:20px; top:50%; transform:translateY(-50%); z-index:1000; background:rgba(15,23,42,0.95); border:1px solid rgba(148,163,184,0.2); border-radius:12px; padding:0.75rem; backdrop-filter:blur(10px);">
+        <div style="display:flex; flex-direction:column; gap:0.5rem; align-items:center;">
+            <a href="#resultsSection" class="nav-dot" title="An&#x00FA;ncio" style="width:36px;height:36px;border-radius:50%;background:rgba(99,102,241,0.3);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.7)'" onmouseout="this.style.background='rgba(99,102,241,0.3)'">&#x1F4DD;</a>
+            <a href="#imageGallerySection" class="nav-dot" title="Imagens" style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.3);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(59,130,246,0.7)'" onmouseout="this.style.background='rgba(59,130,246,0.3)'">&#x1F5BC;</a>
+            <a href="#videoSection" class="nav-dot" title="V&#x00ED;deo" style="width:36px;height:36px;border-radius:50%;background:rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(139,92,246,0.7)'" onmouseout="this.style.background='rgba(139,92,246,0.3)'">&#x1F3AC;</a>
+            <a href="#removeBgSection" class="nav-dot" title="Remover Fundo" style="width:36px;height:36px;border-radius:50%;background:rgba(236,72,153,0.3);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(236,72,153,0.7)'" onmouseout="this.style.background='rgba(236,72,153,0.3)'">&#x2702;</a>
+            <a href="#influencerSection" class="nav-dot" title="Influencer" style="width:36px;height:36px;border-radius:50%;background:rgba(245,158,11,0.3);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.7)'" onmouseout="this.style.background='rgba(245,158,11,0.3)'">&#x1F31F;</a>
+            <a href="#scenesSection" class="nav-dot" title="Cen&#x00E1;rios" style="width:36px;height:36px;border-radius:50%;background:rgba(251,146,60,0.3);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(251,146,60,0.7)'" onmouseout="this.style.background='rgba(251,146,60,0.3)'">&#x1F3A8;</a>
+            <a href="#downloadHub" class="nav-dot" title="Downloads" style="width:36px;height:36px;border-radius:50%;background:rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.7)'" onmouseout="this.style.background='rgba(16,185,129,0.3)'">&#x1F4E6;</a>
+        </div>
+    </div>
 </body>
 </html>
