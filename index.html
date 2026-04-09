@@ -917,19 +917,19 @@
             </div>
             <div class="nav-items" id="navItems">
                 <div class="nav-item" data-page="dashboard">
-                    <span class="nav-icon">ð</span>
+                    <span class="nav-icon">&#x1F4CA;</span>
                     <span>Dashboard</span>
                 </div>
                 <div class="nav-item" data-page="new-listing">
-                    <span class="nav-icon">â</span>
+                    <span class="nav-icon">&#x2795;</span>
                     <span>Novo Anúncio</span>
                 </div>
                 <div class="nav-item" data-page="my-listings">
-                    <span class="nav-icon">ð</span>
+                    <span class="nav-icon">&#x1F4CB;</span>
                     <span>Meus Anúncios</span>
                 </div>
                 <div class="nav-item" data-page="settings">
-                    <span class="nav-icon">âï¸</span>
+                    <span class="nav-icon">&#x2699;&#xFE0F;</span>
                     <span>Configurações</span>
                 </div>
             </div>
@@ -963,7 +963,7 @@
 
                         <div class="form-group">
                             <label class="form-label" for="loginPassword">Senha</label>
-                            <input type="password" id="loginPassword" placeholder="â¢â¢â¢â¢â¢â¢â¢â¢" required>
+                            <input type="password" id="loginPassword" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" required>
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
@@ -999,13 +999,13 @@
 
                         <div class="form-group">
                             <label class="form-label" for="registerPassword">Senha</label>
-                            <input type="password" id="registerPassword" placeholder="â¢â¢â¢â¢â¢â¢â¢â¢" minlength="6" required>
+                            <input type="password" id="registerPassword" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" minlength="6" required>
                             <div class="form-help">Mínimo de 6 caracteres</div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label" for="registerPasswordConfirm">Confirmar senha</label>
-                            <input type="password" id="registerPasswordConfirm" placeholder="â¢â¢â¢â¢â¢â¢â¢â¢" required>
+                            <input type="password" id="registerPasswordConfirm" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" required>
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
@@ -1023,7 +1023,7 @@
             <div id="dashboard" class="page">
                 <div class="dashboard-header">
                     <div class="welcome-section">
-                        <h1 class="welcome-title">Olá, <span id="userNameDisplay">Usuário</span>! ð</h1>
+                        <h1 class="welcome-title">Olá, <span id="userNameDisplay">Usuário</span>! &#x1F44B;</h1>
                         <p class="welcome-subtitle">Bem-vindo ao VIMA Studio - Seu assistente de anúncios com IA</p>
                     </div>
                 </div>
@@ -1043,13 +1043,13 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Taxa de Conversão</div>
-                        <div class="stat-value" id="statConversion">â</div>
+                        <div class="stat-value" id="statConversion">&#x2014;</div>
                     </div>
                 </div>
 
                 <div class="action-buttons">
                     <button class="btn btn-primary btn-large" onclick="app.navigateTo('new-listing')">
-                        â¨ Criar Novo Anúncio
+                        &#x2728; Criar Novo Anúncio
                     </button>
                 </div>
             </div>
@@ -1067,7 +1067,7 @@
                         <div class="form-section">
                             <div class="form-section-title">1. Carregue uma Foto</div>
                             <div class="upload-area" id="uploadArea" ondrop="app.handleDrop(event)" ondragover="app.handleDragOver(event)" ondragleave="app.handleDragLeave(event)" onclick="document.getElementById('photoInput').click()">
-                                <div class="upload-icon">ð¸</div>
+                                <div class="upload-icon">&#x1F4F8;</div>
                                 <div class="upload-text">Arraste sua foto aqui ou clique para selecionar</div>
                                 <div class="upload-hint">Formatos suportados: JPG, PNG, WebP (máx. 5MB)</div>
                             </div>
@@ -1094,7 +1094,7 @@
 
                         <!-- Generate Button -->
                         <button type="button" class="btn btn-primary btn-block" id="generateBtn" onclick="app.generateListing()" disabled>
-                            ð¤ Gerar Anúncio com IA
+                            &#x1F916; Gerar Anúncio com IA
                         </button>
                     </div>
 
@@ -1104,56 +1104,56 @@
 
                         <div class="result-field">
                             <div class="result-label">Título</div>
-                            <div class="result-value" id="resultTitle">â</div>
+                            <div class="result-value" id="resultTitle">&#x2014;</div>
                             <div class="result-buttons">
                                 <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultTitle', 'Título')">
-                                    ð Copiar
+                                    &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <div class="result-field">
                             <div class="result-label">Descrição</div>
-                            <div class="result-value" id="resultDescription" style="min-height: 150px; align-items: flex-start; white-space: pre-wrap;">â</div>
+                            <div class="result-value" id="resultDescription" style="min-height: 150px; align-items: flex-start; white-space: pre-wrap;">&#x2014;</div>
                             <div class="result-buttons">
                                 <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultDescription', 'Descrição')">
-                                    ð Copiar
+                                    &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <div class="result-field">
                             <div class="result-label">Palavras-chave</div>
-                            <div class="result-value" id="resultKeywords">â</div>
+                            <div class="result-value" id="resultKeywords">&#x2014;</div>
                             <div class="result-buttons">
                                 <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultKeywords', 'Palavras-chave')">
-                                    ð Copiar
+                                    &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <div class="result-field">
                             <div class="result-label">Categoria Sugerida</div>
-                            <div class="result-value" id="resultCategory">â</div>
+                            <div class="result-value" id="resultCategory">&#x2014;</div>
                             <div class="result-buttons">
                                 <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultCategory', 'Categoria')">
-                                    ð Copiar
+                                    &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <div class="result-field">
                             <div class="result-label">Faixa de Preço Sugerida</div>
-                            <div class="result-value" id="resultPrice">â</div>
+                            <div class="result-value" id="resultPrice">&#x2014;</div>
                             <div class="result-buttons">
                                 <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultPrice', 'Faixa de Preço')">
-                                    ð Copiar
+                                    &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <button class="btn btn-primary btn-block" onclick="app.saveListing()" style="margin-top: 2rem;">
-                            ð¾ Salvar Anúncio
+                            &#x1F4BE; Salvar Anúncio
                         </button>
                     </div>
                 </div>
@@ -1168,7 +1168,7 @@
                     </div>
 
                     <div id="listingsEmpty" class="empty-state">
-                        <div class="empty-icon">ð</div>
+                        <div class="empty-icon">&#x1F4CB;</div>
                         <h3 class="empty-title">Nenhum anúncio salvo ainda</h3>
                         <p class="empty-text">Crie seu primeiro anúncio com a IA para começar</p>
                         <button class="btn btn-primary" onclick="app.navigateTo('new-listing')">
@@ -1216,7 +1216,7 @@
                         <h3 class="settings-title danger-title">Zona de Perigo</h3>
                         <p>Essas ações não podem ser desfeitas.</p>
                         <button class="btn btn-secondary" onclick="app.handleDeleteAccount()" style="border-color: var(--error); color: var(--error);">
-                            ðï¸ Deletar Conta Permanentemente
+                            &#x1F5D1;&#xFE0F; Deletar Conta Permanentemente
                         </button>
                     </div>
                 </div>
@@ -1758,10 +1758,10 @@
                         </div>
                         <div class="listing-card-body">
                             <button class="btn btn-secondary btn-small" onclick="app.editListing(${listings.length - 1 - index})">
-                                âï¸ Editar
+                                &#x270F;&#xFE0F; Editar
                             </button>
                             <button class="btn btn-secondary btn-small" onclick="app.deleteListing(${listings.length - 1 - index})">
-                                ðï¸ Deletar
+                                &#x1F5D1;&#xFE0F; Deletar
                             </button>
                         </div>
                     `;
@@ -1849,10 +1849,10 @@
                 toast.className = `toast ${type}`;
 
                 const icons = {
-                    success: 'â',
-                    error: 'â',
-                    warning: 'â ',
-                    info: 'â¹'
+                    success: '&#x2713;',
+                    error: '&#x2715;',
+                    warning: '&#x26A0;',
+                    info: '&#x2139;'
                 };
 
                 toast.innerHTML = `
