@@ -378,7 +378,7 @@ export default async function handler(req, res) {
         priceRange: structured.preco_sugerido || '',
         price_range: structured.preco_sugerido || '',
         attributes: structured.ficha_tecnica || structured.atributos || {},
-        quality: 85,
+        quality: { score: 85, checks: { seo: true, descricao: true, keywords: true, categoria: true, preco: true } },
         bullet_points: structured.bullet_points || [],
         dicas_foto: structured.dicas_foto || '',
         backend_keywords: structured.backend_keywords || '',
