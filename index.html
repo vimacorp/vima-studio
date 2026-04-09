@@ -2869,6 +2869,165 @@ TYPE html>
                     toast.remove();
                 }, 4000);
             }
+
+        async generateScenes() {
+            if (!this.uploadedImage) { this.showToast('Envie uma foto primeiro', 'error'); return; }
+            const scenesSection = document.getElementById('scenesSection');
+            const scenesLoading = document.getElementById('scenesLoading');
+            const scenesGrid = document.getElementById('scenesGrid');
+            scenesSection.style.display = 'block';
+            scenesLoading.style.display = 'flex';
+            scenesGrid.innerHTML = '';
+            try {
+                const response = await fetch('/api/generate-scenes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: this.uploadedImage })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Erro ao gerar cen\u00e1rios');
+                this.displayScenes(data.scenes);
+                this.showToast(data.scenes.length + ' cen\u00e1rios gerados!', 'success');
+                this.updateDownloadHub();
+            } catch (err) {
+                this.showToast('Erro: ' + err.message, 'error');
+            } finally {
+                scenesLoading.style.display = 'none';
+            }
+        }
+
+        displayScenes(scenes) {
+            this.currentScenes = scenes;
+            const grid = document.getElementById('scenesGrid');
+            grid.innerHTML = '';
+            scenes.forEach((scene, i) => {
+                const card = document.createElement('div');
+                card.style.cssText = 'background:var(--gray-800,#1a1a2e);border-radius:12px;overflow:hidden;border:1px solid var(--gray-700,#2d2d44);';
+                const img = document.createElement('img');
+                img.src = scene.image;
+                img.alt = scene.name;
+                img.style.cssText = 'width:100%;aspect-ratio:1;object-fit:cover;';
+                const info = document.createElement('div');
+                info.style.cssText = 'padding:1rem;display:flex;justify-content:space-between;align-items:center;';
+                const label = document.createElement('span');
+                label.style.cssText = 'font-weight:600;color:var(--gray-100,#e0e0e0);';
+                label.textContent = scene.name;
+                const btn = document.createElement('button');
+                btn.textContent = 'Baixar';
+                btn.style.cssText = 'background:var(--primary,#6c5ce7);color:#fff;border:none;padding:0.5rem 1rem;border-radius:8px;cursor:pointer;';
+                btn.onclick = () => this.downloadScene(i);
+                info.appendChild(label);
+                info.appendChild(btn);
+                card.appendChild(img);
+                card.appendChild(info);
+                grid.appendChild(card);
+            });
+        }
+
+        downloadScene(index) {
+            if (!this.currentScenes || !this.currentScenes[index]) return;
+            const scene = this.currentScenes[index];
+            const a = document.createElement('a');
+            a.href = scene.image;
+            a.download = 'cenario-' + scene.id + '.jpg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        updateDownloadHub() {
+            const hub = document.getElementById('downloadHub');
+            const cats = document.getElementById('downloadCategories');
+            if (!hub || !cats) return;
+            const items = [];
+            if (this.currentListing && this.currentListing.result) {
+                items.push({ cat: 'An\u00fancio', icon: '\ud83d\udcdd', files: [{ name: 'anuncio.txt', type: 'text' }] });
+            }
+            if (this.processedImages && this.processedImages.length > 0) {
+                items.push({ cat: 'Imagens', icon: '\ud83d\uddbc\ufe0f', files: this.processedImages.map((img, i) => ({ name: 'imagem-' + (i+1) + '.jpg', type: 'image', idx: i })) });
+            }
+            if (this.currentScenes && this.currentScenes.length > 0) {
+                items.push({ cat: 'Cen\u00e1rios', icon: '\ud83c\udfa8', files: this.currentScenes.map((s, i) => ({ name: 'cenario-' + s.id + '.jpg', type: 'scene', idx: i })) });
+            }
+            if (items.length === 0) { hub.style.display = 'none'; return; }
+            hub.style.display = 'block';
+            cats.innerHTML = '';
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.style.cssText = 'background:var(--gray-800,#1a1a2e);border-radius:12px;padding:1.5rem;border:1px solid var(--gray-700,#2d2d44);';
+                const h = document.createElement('h3');
+                h.style.cssText = 'margin:0 0 1rem 0;color:var(--gray-100,#e0e0e0);';
+                h.textContent = item.icon + ' ' + item.cat + ' (' + item.files.length + ')';
+                card.appendChild(h);
+                const list = document.createElement('div');
+                list.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;';
+                item.files.forEach(f => {
+                    const btn = document.createElement('button');
+                    btn.textContent = f.name;
+                    btn.style.cssText = 'background:var(--gray-700,#2d2d44);color:var(--gray-200,#ccc);border:none;padding:0.75rem;border-radius:8px;cursor:pointer;text-align:left;';
+                    btn.onclick = () => this.downloadHubFile(f.type, f.idx || 0);
+                    list.appendChild(btn);
+                });
+                card.appendChild(list);
+                cats.appendChild(card);
+            });
+        }
+
+        downloadHubFile(type, index) {
+            let data, filename;
+            if (type === 'text' && this.currentListing) {
+                const blob = new Blob([this.currentListing.result], { type: 'text/plain' });
+                data = URL.createObjectURL(blob);
+                filename = 'anuncio.txt';
+            } else if (type === 'image' && this.processedImages) {
+                const img = this.processedImages[index];
+                data = img.url || img;
+                filename = 'imagem-' + (index + 1) + '.jpg';
+            } else if (type === 'scene' && this.currentScenes) {
+                data = this.currentScenes[index].image;
+                filename = 'cenario-' + this.currentScenes[index].id + '.jpg';
+            }
+            if (data) {
+                const a = document.createElement('a');
+                a.href = data;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }
+
+        async downloadAllZip() {
+            this.showToast('Preparando downloads...', 'info');
+            let delay = 0;
+            if (this.processedImages) {
+                this.processedImages.forEach((img, i) => {
+                    setTimeout(() => {
+                        const a = document.createElement('a');
+                        a.href = img.url || img;
+                        a.download = 'imagem-' + (i + 1) + '.jpg';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    }, delay);
+                    delay += 500;
+                });
+            }
+            if (this.currentScenes) {
+                this.currentScenes.forEach((scene, i) => {
+                    setTimeout(() => {
+                        const a = document.createElement('a');
+                        a.href = scene.image;
+                        a.download = 'cenario-' + scene.id + '.jpg';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    }, delay);
+                    delay += 500;
+                });
+            }
+            this.showToast('Downloads iniciados!', 'success');
+        }
         }
 
         // Initialize app when DOM is ready
