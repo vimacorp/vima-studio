@@ -168,7 +168,7 @@ TYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIMA Studio - Gere AnÃºncios com IA</title>
+    <title>VIMA Studio - Gere Anúncios com IA</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -203,6 +203,7 @@ TYPE html>
             --warning: #f59e0b;
         }
 
+        html { height: 100vh; overflow: hidden; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--dark);
@@ -1276,7 +1277,162 @@ TYPE html>
     .narration-box h4 { margin: 0 0 0.75rem; color: #e2e8f0; }
     .narration-box p { margin: 0; color: #cbd5e1; line-height: 1.6; }
     .bulk-download { margin-top: 1.5rem; text-align: center; }
-    </style>
+    
+
+        /* === REDESIGN V2 - Professional UI === */
+        
+        /* Sidebar Enhancement */
+        .sidebar {
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+            border-right: 1px solid rgba(148, 163, 184, 0.08) !important;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.3) !important;
+        }
+        .sidebar .logo { letter-spacing: 1px; }
+        .sidebar .logo span { 
+            background: linear-gradient(135deg, #f59e0b, #fbbf24) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+        .nav-item {
+            border-radius: 10px !important;
+            margin: 2px 8px !important;
+            padding: 10px 16px !important;
+            transition: all 0.2s ease !important;
+        }
+        .nav-item:hover {
+            background: rgba(99, 102, 241, 0.1) !important;
+        }
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.15)) !important;
+            border-left: 3px solid #6366f1 !important;
+        }
+
+        /* Dashboard Cards */
+        .stat-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9)) !important;
+            border: 1px solid rgba(148, 163, 184, 0.08) !important;
+            border-radius: 16px !important;
+            padding: 1.5rem !important;
+            transition: transform 0.2s, box-shadow 0.2s !important;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
+        }
+
+        /* Buttons Enhancement */
+        .btn-primary, .btn-generate {
+            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 12px 32px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.3px !important;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+            transition: all 0.2s ease !important;
+        }
+        .btn-primary:hover, .btn-generate:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
+        }
+
+        /* Action Buttons Row */
+        .btn-action {
+            border-radius: 10px !important;
+            padding: 10px 20px !important;
+            font-weight: 600 !important;
+            font-size: 0.9rem !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+        }
+        .btn-action:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+        }
+
+        /* Result Sections */
+        .result-section {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.7)) !important;
+            border: 1px solid rgba(148, 163, 184, 0.08) !important;
+            border-radius: 16px !important;
+            padding: 2rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+        .result-section h2 {
+            font-size: 1.4rem !important;
+            font-weight: 700 !important;
+            letter-spacing: -0.3px !important;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed rgba(148, 163, 184, 0.2) !important;
+            border-radius: 16px !important;
+            background: rgba(15, 23, 42, 0.5) !important;
+            transition: all 0.3s ease !important;
+        }
+        .upload-area:hover {
+            border-color: rgba(99, 102, 241, 0.5) !important;
+            background: rgba(99, 102, 241, 0.05) !important;
+        }
+
+        /* Input Fields */
+        select, input[type="text"], input[type="email"], input[type="password"], textarea {
+            background: rgba(15, 23, 42, 0.8) !important;
+            border: 1px solid rgba(148, 163, 184, 0.15) !important;
+            border-radius: 10px !important;
+            color: #e2e8f0 !important;
+            padding: 10px 14px !important;
+            transition: border-color 0.2s !important;
+        }
+        select:focus, input:focus, textarea:focus {
+            border-color: #6366f1 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+        }
+
+        /* Toast Enhancement */
+        .toast {
+            border-radius: 12px !important;
+            backdrop-filter: blur(10px) !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+        }
+
+        /* Listing Container Scrollbar */
+        .listing-container::-webkit-scrollbar { width: 6px; }
+        .listing-container::-webkit-scrollbar-track { background: transparent; }
+        .listing-container::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 3px; }
+        .listing-container::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.4); }
+
+        /* Main Content Scrollbar */
+        .main-content::-webkit-scrollbar { width: 6px; }
+        .main-content::-webkit-scrollbar-track { background: transparent; }
+        .main-content::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.15); border-radius: 3px; }
+
+        /* Welcome Section */
+        .welcome-section h1 {
+            font-size: 1.8rem !important;
+            font-weight: 800 !important;
+            background: linear-gradient(135deg, #e2e8f0, #f8fafc) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+
+        /* Loading Spinner Enhancement */
+        .loading-spinner {
+            border: 3px solid rgba(148, 163, 184, 0.1) !important;
+            border-top: 3px solid #6366f1 !important;
+        }
+
+        /* Download Hub Category Cards */
+        #downloadCategories > div {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #downloadCategories > div:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+</style>
 </head>
 <body>
     <div id="app">
@@ -1292,20 +1448,20 @@ TYPE html>
                 </div>
                 <div class="nav-item" data-page="new-listing">
                     <span class="nav-icon">&#x2795;</span>
-                    <span>Novo AnÃºncio</span>
+                    <span>Novo Anúncio</span>
                 </div>
                 <div class="nav-item" data-page="my-listings">
                     <span class="nav-icon">&#x1F4CB;</span>
-                    <span>Meus AnÃºncios</span>
+                    <span>Meus Anúncios</span>
                 </div>
                 <div class="nav-item" data-page="settings">
                     <span class="nav-icon">&#x2699;&#xFE0F;</span>
-                    <span>ConfiguraÃ§Ãµes</span>
+                    <span>Configurações</span>
                 </div>
             </div>
             <div class="sidebar-user">
                 <div class="user-info">
-                    <div class="user-name" id="sidebarUserName">UsuÃ¡rio</div>
+                    <div class="user-name" id="sidebarUserName">Usuário</div>
                     <div class="user-email" id="sidebarUserEmail">email@example.com</div>
                 </div>
                 <button class="btn btn-secondary btn-small btn-block" onclick="app.logout()">
@@ -1323,7 +1479,7 @@ TYPE html>
                         VIMA <span>STUDIO</span>
                     </div>
                     <h2 class="auth-title">Bem-vindo de volta</h2>
-                    <p class="auth-subtitle">FaÃ§a login para acessar sua conta</p>
+                    <p class="auth-subtitle">Faça login para acessar sua conta</p>
 
                     <form id="loginForm" onsubmit="app.handleLogin(event)">
                         <div class="form-group">
@@ -1342,7 +1498,7 @@ TYPE html>
                     </form>
 
                     <div class="auth-links">
-                        NÃ£o tem conta? <a href="#register">Criar conta</a>
+                        Não tem conta? <a href="#register">Criar conta</a>
                     </div>
                 </div>
             </div>
@@ -1359,7 +1515,7 @@ TYPE html>
                     <form id="registerForm" onsubmit="app.handleRegister(event)">
                         <div class="form-group">
                             <label class="form-label" for="registerName">Nome completo</label>
-                            <input type="text" id="registerName" placeholder="JoÃ£o Silva" required>
+                            <input type="text" id="registerName" placeholder="João Silva" required>
                         </div>
 
                         <div class="form-group">
@@ -1370,7 +1526,7 @@ TYPE html>
                         <div class="form-group">
                             <label class="form-label" for="registerPassword">Senha</label>
                             <input type="password" id="registerPassword" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" minlength="6" required>
-                            <div class="form-help">MÃ­nimo de 6 caracteres</div>
+                            <div class="form-help">Mínimo de 6 caracteres</div>
                         </div>
 
                         <div class="form-group">
@@ -1384,7 +1540,7 @@ TYPE html>
                     </form>
 
                     <div class="auth-links">
-                        JÃ¡ tem conta? <a href="#login">Fazer login</a>
+                        Já tem conta? <a href="#login">Fazer login</a>
                     </div>
                 </div>
             </div>
@@ -1393,33 +1549,33 @@ TYPE html>
             <div id="dashboard" class="page">
                 <div class="dashboard-header">
                     <div class="welcome-section">
-                        <h1 class="welcome-title">OlÃ¡, <span id="userNameDisplay">UsuÃ¡rio</span>! &#x1F44B;</h1>
-                        <p class="welcome-subtitle">Bem-vindo ao VIMA Studio - Seu assistente de anÃºncios com IA</p>
+                        <h1 class="welcome-title">Olá, <span id="userNameDisplay">Usuário</span>! &#x1F44B;</h1>
+                        <p class="welcome-subtitle">Bem-vindo ao VIMA Studio - Seu assistente de anúncios com IA</p>
                     </div>
                 </div>
 
                 <div class="stats-grid" id="statsGrid">
                     <div class="stat-card">
-                        <div class="stat-label">AnÃºncios Criados</div>
+                        <div class="stat-label">Anúncios Criados</div>
                         <div class="stat-value" id="statCreated">0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">CrÃ©ditos Restantes</div>
+                        <div class="stat-label">Créditos Restantes</div>
                         <div class="stat-value" id="statCredits">50</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">AnÃºncios Salvos</div>
+                        <div class="stat-label">Anúncios Salvos</div>
                         <div class="stat-value" id="statSaved">0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Taxa de ConversÃ£o</div>
+                        <div class="stat-label">Taxa de Conversão</div>
                         <div class="stat-value" id="statConversion">&#x2014;</div>
                     </div>
                 </div>
 
                 <div class="action-buttons">
                     <button class="btn btn-primary btn-large" onclick="app.navigateTo('new-listing')">
-                        &#x2728; Criar Novo AnÃºncio
+                        &#x2728; Criar Novo Anúncio
                     </button>
                 </div>
             </div>
@@ -1428,8 +1584,8 @@ TYPE html>
             <div id="new-listing" class="page">
                 <div class="listing-container">
                     <div class="listing-header">
-                        <h1>Criar Novo AnÃºncio</h1>
-                        <p>Carregue uma foto do seu produto e deixe a IA gerar um anÃºncio otimizado</p>
+                        <h1>Criar Novo Anúncio</h1>
+                        <p>Carregue uma foto do seu produto e deixe a IA gerar um anúncio otimizado</p>
                     </div>
 
                     <div class="listing-form">
@@ -1439,7 +1595,7 @@ TYPE html>
                             <div class="upload-area" id="uploadArea" ondrop="app.handleDrop(event)" ondragover="app.handleDragOver(event)" ondragleave="app.handleDragLeave(event)" onclick="document.getElementById('photoInput').click()">
                                 <div class="upload-icon">&#x1F4F8;</div>
                                 <div class="upload-text">Arraste sua foto aqui ou clique para selecionar</div>
-                                <div class="upload-hint">Formatos suportados: JPG, PNG, WebP (mÃ¡x. 5MB)</div>
+                                <div class="upload-hint">Formatos suportados: JPG, PNG, WebP (máx. 5MB)</div>
                             </div>
                             <input type="file" id="photoInput" accept="image/*" onchange="app.handlePhotoUpload(event)">
                             <img id="photoPreview" class="image-preview" alt="Preview da foto">
@@ -1466,29 +1622,29 @@ TYPE html>
 
                         <!-- Generate Button -->
                         <button type="button" class="btn btn-primary btn-block" id="generateBtn" onclick="app.generateListing()" disabled>
-                            &#x1F916; Gerar AnÃºncio com IA
+                            &#x1F916; Gerar Anúncio com IA
                         </button>
                     </div>
 
                     <!-- Results Section -->
                     <div class="results-section" id="resultsSection">
-                        <h2 style="margin-bottom: 2rem;">Seu AnÃºncio Gerado</h2>
+                        <h2 style="margin-bottom: 2rem;">Seu Anúncio Gerado</h2>
 
                         <div class="result-field">
-                            <div class="result-label">TÃ­tulo</div>
+                            <div class="result-label">Título</div>
                             <div class="result-value" id="resultTitle">&#x2014;</div>
                             <div class="result-buttons">
-                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultTitle', 'TÃ­tulo')">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultTitle', 'Título')">
                                     &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <div class="result-field">
-                            <div class="result-label">DescriÃ§Ã£o</div>
+                            <div class="result-label">Descrição</div>
                             <div class="result-value" id="resultDescription" style="min-height: 150px; align-items: flex-start; white-space: pre-wrap;">&#x2014;</div>
                             <div class="result-buttons">
-                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultDescription', 'DescriÃ§Ã£o')">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultDescription', 'Descrição')">
                                     &#x1F4CB; Copiar
                                 </button>
                             </div>
@@ -1515,17 +1671,17 @@ TYPE html>
                         </div>
 
                         <div class="result-field">
-                            <div class="result-label">Faixa de PreÃ§o Sugerida</div>
+                            <div class="result-label">Faixa de Preço Sugerida</div>
                             <div class="result-value" id="resultPrice">&#x2014;</div>
                             <div class="result-buttons">
-                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultPrice', 'Faixa de PreÃ§o')">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultPrice', 'Faixa de Preço')">
                                     &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <button class="btn btn-primary btn-block" onclick="app.saveListing()" style="margin-top: 2rem;">
-                            &#x1F4BE; Salvar AnÃºncio
+                            &#x1F4BE; Salvar Anúncio
                         </button>
                     </div>
 
@@ -1612,16 +1768,16 @@ TYPE html>
             <div id="my-listings" class="page">
                 <div class="listing-container">
                     <div class="listing-header">
-                        <h1>Meus AnÃºncios</h1>
-                        <p>Visualize e gerencie todos os seus anÃºncios salvos</p>
+                        <h1>Meus Anúncios</h1>
+                        <p>Visualize e gerencie todos os seus anúncios salvos</p>
                     </div>
 
                     <div id="listingsEmpty" class="empty-state">
                         <div class="empty-icon">&#x1F4CB;</div>
-                        <h3 class="empty-title">Nenhum anÃºncio salvo ainda</h3>
-                        <p class="empty-text">Crie seu primeiro anÃºncio com a IA para comeÃ§ar</p>
+                        <h3 class="empty-title">Nenhum anúncio salvo ainda</h3>
+                        <p class="empty-text">Crie seu primeiro anúncio com a IA para começar</p>
                         <button class="btn btn-primary" onclick="app.navigateTo('new-listing')">
-                            Criar AnÃºncio
+                            Criar Anúncio
                         </button>
                     </div>
 
@@ -1633,12 +1789,12 @@ TYPE html>
             <div id="settings" class="page">
                 <div class="listing-container">
                     <div class="listing-header">
-                        <h1>ConfiguraÃ§Ãµes</h1>
-                        <p>Gerencie suas preferÃªncias e dados de conta</p>
+                        <h1>Configurações</h1>
+                        <p>Gerencie suas preferências e dados de conta</p>
                     </div>
 
                     <div class="settings-section">
-                        <h3 class="settings-title">InformaÃ§Ãµes da Conta</h3>
+                        <h3 class="settings-title">Informações da Conta</h3>
                         <div class="form-group">
                             <label class="form-label">Nome</label>
                             <input type="text" id="settingsName" disabled>
@@ -1650,20 +1806,20 @@ TYPE html>
                     </div>
 
                     <div class="settings-section">
-                        <h3 class="settings-title">PreferÃªncias</h3>
+                        <h3 class="settings-title">Preferências</h3>
                         <div class="form-group">
                             <label class="form-label" for="settingsLanguage">Idioma</label>
                             <select id="settingsLanguage">
-                                <option value="pt-BR" selected>PortuguÃªs (Brasil)</option>
+                                <option value="pt-BR" selected>Português (Brasil)</option>
                                 <option value="en">English</option>
-                                <option value="es">EspaÃ±ol</option>
+                                <option value="es">EspaÀ±ol</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="settings-section danger-zone">
                         <h3 class="settings-title danger-title">Zona de Perigo</h3>
-                        <p>Essas aÃ§Ãµes nÃ£o podem ser desfeitas.</p>
+                        <p>Essas ações não podem ser desfeitas.</p>
                         <button class="btn btn-secondary" onclick="app.handleDeleteAccount()" style="border-color: var(--error); color: var(--error);">
                             &#x1F5D1;&#xFE0F; Deletar Conta Permanentemente
                         </button>
@@ -1762,7 +1918,7 @@ TYPE html>
 
             updateUserUI() {
                 if (this.currentUser) {
-                    const name = this.currentUser.user_metadata?.name || 'UsuÃ¡rio';
+                    const name = this.currentUser.user_metadata?.name || 'Usuário';
                     document.getElementById('userNameDisplay').textContent = name;
                     document.getElementById('sidebarUserName').textContent = name;
                     document.getElementById('sidebarUserEmail').textContent = this.currentUser.email;
@@ -1895,12 +2051,12 @@ TYPE html>
                 }
 
                 if (password !== passwordConfirm) {
-                    this.showToast('As senhas nÃ£o correspondem', 'error');
+                    this.showToast('As senhas não correspondem', 'error');
                     return;
                 }
 
                 if (password.length < 6) {
-                    this.showToast('A senha deve ter no mÃ­nimo 6 caracteres', 'error');
+                    this.showToast('A senha deve ter no mínimo 6 caracteres', 'error');
                     return;
                 }
 
@@ -1923,7 +2079,7 @@ TYPE html>
                         throw error;
                     }
 
-                    this.showToast('Conta criada com sucesso! FaÃ§a login para continuar.', 'success');
+                    this.showToast('Conta criada com sucesso! Faça login para continuar.', 'success');
                     setTimeout(() => {
                         window.location.hash = '#login';
                     }, 500);
@@ -1992,7 +2148,7 @@ TYPE html>
                     if (file.type.startsWith('image/')) {
                         this.processPhoto(file);
                     } else {
-                        this.showToast('Por favor, carregue uma imagem vÃ¡lida', 'error');
+                        this.showToast('Por favor, carregue uma imagem válida', 'error');
                     }
                 }
             }
@@ -2008,7 +2164,7 @@ TYPE html>
                 // Validate file size (5MB max)
                 const maxSize = 5 * 1024 * 1024;
                 if (file.size > maxSize) {
-                    this.showToast('Imagem muito grande. MÃ¡ximo 5MB.', 'error');
+                    this.showToast('Imagem muito grande. Máximo 5MB.', 'error');
                     return;
                 }
 
@@ -2507,7 +2663,7 @@ TYPE html>
                 const text = element.textContent;
 
                 navigator.clipboard.writeText(text).then(() => {
-                    this.showToast(`${fieldName} copiado para a Ã¡rea de transferÃªncia!`, 'success');
+                    this.showToast(`${fieldName} copiado para a área de transferência!`, 'success');
                 }).catch(() => {
                     // Fallback
                     const textarea = document.createElement('textarea');
@@ -2516,13 +2672,13 @@ TYPE html>
                     textarea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textarea);
-                    this.showToast(`${fieldName} copiado para a Ã¡rea de transferÃªncia!`, 'success');
+                    this.showToast(`${fieldName} copiado para a área de transferência!`, 'success');
                 });
             }
 
             async saveListing() {
                 if (!this.currentListing.result) {
-                    this.showToast('Nenhum anÃºncio gerado para salvar', 'error');
+                    this.showToast('Nenhum anúncio gerado para salvar', 'error');
                     return;
                 }
 
@@ -2543,7 +2699,7 @@ TYPE html>
                 saved.push(listing);
                 localStorage.setItem('vima_listings', JSON.stringify(saved));
 
-                this.showToast('AnÃºncio salvo com sucesso!', 'success');
+                this.showToast('Anúncio salvo com sucesso!', 'success');
 
                 // Reset form
                 setTimeout(() => {
@@ -2626,7 +2782,7 @@ TYPE html>
             }
 
             deleteListing(index) {
-                if (!confirm('Tem certeza que deseja deletar este anÃºncio?')) {
+                if (!confirm('Tem certeza que deseja deletar este anúncio?')) {
                     return;
                 }
 
@@ -2634,7 +2790,7 @@ TYPE html>
                 listings.splice(listings.length - 1 - index, 1);
                 localStorage.setItem('vima_listings', JSON.stringify(listings));
 
-                this.showToast('AnÃºncio deletado com sucesso', 'success');
+                this.showToast('Anúncio deletado com sucesso', 'success');
                 this.loadMyListings();
             }
 
@@ -2643,7 +2799,7 @@ TYPE html>
             // ================================================================
 
             async handleDeleteAccount() {
-                const confirmed = confirm('Tem certeza? Esta aÃ§Ã£o nÃ£o pode ser desfeita. Todos os seus dados serÃ£o deletados permanentemente.');
+                const confirmed = confirm('Tem certeza? Esta ação não pode ser desfeita. Todos os seus dados serão deletados permanentemente.');
 
                 if (!confirmed) {
                     return;
@@ -2699,7 +2855,7 @@ TYPE html>
                 toast.innerHTML = `
                     <div class="toast-icon">${icons[type] || icons.info}</div>
                     <div class="toast-message">${message}</div>
-                    <button class="toast-close" onclick="this.parentElement.remove()">Ã</button>
+                    <button class="toast-close" onclick="this.parentElement.remove()">À</button>
                 `;
 
                 container.appendChild(toast);
