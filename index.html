@@ -1655,7 +1655,7 @@
                 document.getElementById('resultPrice').textContent = listing.priceRange;
 
                 document.getElementById('resultsSection').classList.add('active');
-                setTimeout(() => { const rs = document.getElementById('resultsSection'); const container = document.querySelector('.listing-container'); if (container) { container.scrollTop = rs.offsetTop - 20; } else { rs.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, 100);
+                setTimeout(() => { document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
             }
 
             copyToClipboard(elementId, fieldName) {
