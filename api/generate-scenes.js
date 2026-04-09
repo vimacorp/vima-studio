@@ -100,7 +100,7 @@ async function generateWithFreepik(sceneData, imageBase64) {
     body: JSON.stringify({
       image: imageBase64,
       prompt: sceneData.prompt,
-      imagination: "low",
+      imagination: "subtle",
       aspect_ratio: "square_1_1"
     })
   });
