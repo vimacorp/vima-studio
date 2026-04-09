@@ -281,6 +281,7 @@
         .page.active {
             display: flex;
             flex-direction: column;
+            height: 100vh;
         }
 
         /* Login & Register Pages */
@@ -1655,7 +1656,7 @@
                 document.getElementById('resultPrice').textContent = listing.priceRange;
 
                 document.getElementById('resultsSection').classList.add('active');
-                setTimeout(() => { const rs = document.getElementById('resultsSection'); if (rs) { window.scrollTo({ top: rs.offsetTop - 20, behavior: 'instant' }); } }, 200);
+                setTimeout(() => { const container = document.querySelector('.listing-container'); const rs = document.getElementById('resultsSection'); if (container && rs) { container.scrollTo({ top: rs.offsetTop - container.offsetTop - 20, behavior: 'smooth' }); } }, 200);
             }
 
             copyToClipboard(elementId, fieldName) {
