@@ -272,10 +272,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { image, productName, productDescription, marketplace = 'mercadolivre' } = req.body;
+    const { image, imageBase64, productName, productDescription, marketplace = 'mercadolivre' } = req.body;
 
-    if (!image) {
-      return res.status(400).json({ error: 'Image is required' });
+    // Accept both field names for frontend compatibility
+    const imageData = image || imageBase64;
+
+    if (!imageData) {
+      return res.status(400).json({ success: false, error: 'Image is required' });
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -288,13 +291,13 @@ export default async function handler(req, res) {
     const config = marketplaceConfigs[mkt] || marketplaceConfigs.mercadolivre;
 
     // Clean base64 image
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
 
     // Detect image type
     let mediaType = 'image/jpeg';
-    if (image.startsWith('data:image/png')) mediaType = 'image/png';
-    else if (image.startsWith('data:image/webp')) mediaType = 'image/webp';
-    else if (image.startsWith('data:image/gif')) mediaType = 'image/gif';
+    if (imageData.startsWith('data:image/png')) mediaType = 'image/png';
+    else if (imageData.startsWith('data:image/webp')) mediaType = 'image/webp';
+    else if (imageData.startsWith('data:image/gif')) mediaType = 'image/gif';
 
     // Build the user prompt
     const userPromptText = config.userPrompt(productName, productDescription);
@@ -337,6 +340,7 @@ export default async function handler(req, res) {
       const errorText = await response.text();
       console.error('Claude API error:', response.status, errorText);
       return res.status(response.status).json({
+        success: false,
         error: `Claude API error: ${response.status}`,
         details: errorText
       });
@@ -363,7 +367,9 @@ export default async function handler(req, res) {
       : resultText;
 
     return res.status(200).json({
+      success: true,
       result: displayText,
+      listing: displayText,
       structured: structured || resultText,
       marketplace: mkt,
       marketplaceName: config.name
@@ -372,6 +378,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Generate error:', error);
     return res.status(500).json({
+      success: false,
       error: 'Failed to generate listing',
       details: error.message
     });
