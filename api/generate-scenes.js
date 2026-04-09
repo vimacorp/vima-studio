@@ -1,157 +1,167 @@
-import sharp from 'sharp';
-
-export const config = { maxDuration: 120 };
-
 var SCENES = [
-  { id: 'living-room', name: 'Sala de Estar', prompt: 'modern living room warm lighting wooden furniture cozy interior design', bg: { r: 245, g: 235, b: 220 }, accent: { r: 180, g: 140, b: 100 } },
-  { id: 'kitchen', name: 'Cozinha', prompt: 'modern kitchen countertop marble surface bright clean kitchen natural light', bg: { r: 240, g: 245, b: 245 }, accent: { r: 160, g: 180, b: 170 } },
-  { id: 'office', name: 'Escritorio', prompt: 'professional office desk modern workspace clean organized desk', bg: { r: 235, g: 235, b: 240 }, accent: { r: 100, g: 120, b: 150 } },
-  { id: 'bedroom', name: 'Quarto', prompt: 'elegant bedroom soft bedding warm ambient lighting peaceful', bg: { r: 248, g: 240, b: 245 }, accent: { r: 180, g: 160, b: 175 } },
-  { id: 'outdoor', name: 'Ambiente Externo', prompt: 'outdoor garden patio natural greenery sunlit terrace fresh', bg: { r: 230, g: 245, b: 230 }, accent: { r: 120, g: 160, b: 120 } },
-  { id: 'studio', name: 'Estudio Fotografico', prompt: 'professional photo studio clean white backdrop studio lighting product photography', bg: { r: 250, g: 250, b: 250 }, accent: { r: 200, g: 200, b: 200 } },
-  { id: 'store', name: 'Vitrine de Loja', prompt: 'luxury store display elegant retail shelf boutique shop interior premium', bg: { r: 255, g: 248, b: 235 }, accent: { r: 200, g: 170, b: 120 } },
-  { id: 'minimalist', name: 'Minimalista', prompt: 'minimalist white surface clean scandinavian design soft shadow elegant simplicity', bg: { r: 245, g: 245, b: 245 }, accent: { r: 220, g: 220, b: 220 } }
+  {
+    name: "Sala de Estar",
+    key: "living-room",
+    prompt: "Professional product photography in a cozy modern living room with warm natural light, wooden shelves, plants, soft neutral tones"
+  },
+  {
+    name: "Cozinha",
+    key: "kitchen",
+    prompt: "Professional product photography in a bright modern kitchen with marble countertop, natural daylight from large window, clean aesthetic"
+  },
+  {
+    name: "Escritório",
+    key: "office",
+    prompt: "Professional product photography in a minimalist home office with wooden desk, warm ambient light, organized workspace"
+  },
+  {
+    name: "Quarto",
+    key: "bedroom",
+    prompt: "Professional product photography in an elegant bedroom with soft bedding, warm lamp light, cozy atmosphere"
+  },
+  {
+    name: "Ambiente Externo",
+    key: "outdoor",
+    prompt: "Professional product photography in a beautiful outdoor garden terrace with natural sunlight, green plants, fresh atmosphere"
+  },
+  {
+    name: "Estúdio Fotográfico",
+    key: "studio",
+    prompt: "Professional product photography in a clean photography studio with soft diffused lighting, neutral gray backdrop, commercial quality"
+  },
+  {
+    name: "Vitrine de Loja",
+    key: "store",
+    prompt: "Professional product photography in an upscale retail store display, elegant shelving, premium brand presentation, spotlights"
+  },
+  {
+    name: "Minimalista",
+    key: "minimalist",
+    prompt: "Professional product photography on a clean white surface with soft shadows, minimalist aesthetic, e-commerce ready"
+  }
 ];
 
-async function generateWithPhotoroom(imageBuffer, prompt) {
-  var apiKey = process.env.PHOTOROOM_API_KEY;
-  if (!apiKey) throw new Error('No Photoroom API key');
-
-  var blob = new Blob([imageBuffer], { type: 'image/png' });
-  var formData = new FormData();
-  formData.append('image_file', blob, 'image.png');
-  formData.append('prompt', prompt);
-
-  var response = await fetch('https://sdk.photoroom.com/v1/instant-backgrounds', {
-    method: 'POST',
-    headers: { 'x-api-key': apiKey },
-    body: formData
-  });
-
-  if (!response.ok) {
-    var err = await response.text();
-    throw new Error('Photoroom ' + response.status + ': ' + err);
+function stripDataPrefix(imageBase64) {
+  if (imageBase64.indexOf(",") > -1) {
+    return imageBase64.split(",")[1];
   }
-
-  var arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  return imageBase64;
 }
 
-async function generateWithSharp(imageBuffer, scene, width, height) {
-  var bg = scene.bg;
-  var ac = scene.accent;
-
-  var svgBg = '<svg width="' + width + '" height="' + height + '">' +
-    '<defs>' +
-    '<radialGradient id="g1" cx="50%" cy="30%" r="80%">' +
-    '<stop offset="0%" stop-color="rgb(' + bg.r + ',' + bg.g + ',' + bg.b + ')"/>' +
-    '<stop offset="100%" stop-color="rgb(' + Math.max(0, bg.r - 30) + ',' + Math.max(0, bg.g - 30) + ',' + Math.max(0, bg.b - 30) + ')"/>' +
-    '</radialGradient>' +
-    '<linearGradient id="floor" x1="0" y1="0.6" x2="0" y2="1">' +
-    '<stop offset="0%" stop-color="rgb(' + ac.r + ',' + ac.g + ',' + ac.b + ')" stop-opacity="0.15"/>' +
-    '<stop offset="100%" stop-color="rgb(' + ac.r + ',' + ac.g + ',' + ac.b + ')" stop-opacity="0.4"/>' +
-    '</linearGradient>' +
-    '</defs>' +
-    '<rect width="100%" height="100%" fill="url(#g1)"/>' +
-    '<rect y="60%" width="100%" height="40%" fill="url(#floor)"/>' +
-    '<line x1="0" y1="60%" x2="100%" y2="60%" stroke="rgb(' + ac.r + ',' + ac.g + ',' + ac.b + ')" stroke-opacity="0.1" stroke-width="1"/>' +
-    '<ellipse cx="50%" cy="90%" rx="40%" ry="5%" fill="rgba(0,0,0,0.08)"/>' +
+function createSvgFallback(sceneKey, sceneLabel) {
+  var colors = {
+    "living-room": ["#d4a574", "#8b6f47"],
+    "kitchen": ["#e8f4f8", "#b8d4e3"],
+    "office": ["#c8b8a8", "#8b8680"],
+    "bedroom": ["#e6d5e6", "#b8a5b8"],
+    "outdoor": ["#87ceeb", "#90ee90"],
+    "studio": ["#f0f0f0", "#c0c0c0"],
+    "store": ["#f5e6cc", "#d4a574"],
+    "minimalist": ["#ffffff", "#f0f0f0"]
+  };
+  var c = colors[sceneKey] || ["#e0e0e0", "#a0a0a0"];
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024">' +
+    '<defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">' +
+    '<stop offset="0%" style="stop-color:' + c[0] + '"/>' +
+    '<stop offset="100%" style="stop-color:' + c[1] + '"/>' +
+    '</linearGradient></defs>' +
+    '<rect width="1024" height="1024" fill="url(#bg)"/>' +
+    '<text x="512" y="950" text-anchor="middle" font-size="28" fill="rgba(0,0,0,0.4)" font-family="Arial">' + (sceneLabel || 'Cenário') + '</text>' +
     '</svg>';
+  return "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64");
+}
 
-  var background = await sharp(Buffer.from(svgBg)).resize(width, height).png().toBuffer();
+async function generateScene(sceneData, imageBuffer) {
+  var apiKey = process.env.PHOTOROOM_API_KEY;
+  try {
+    var blob = new Blob([imageBuffer], { type: 'image/png' });
+    var formData = new FormData();
+    formData.append('imageFile', blob, 'product.png');
+    formData.append('background.prompt', sceneData.prompt);
+    formData.append('referenceBox', 'originalImage');
 
-  var productW = Math.round(width * 0.60);
-  var productH = Math.round(height * 0.65);
-  var product = await sharp(imageBuffer)
-    .resize(productW, productH, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .png()
-    .toBuffer();
+    console.log('[Scenes] Calling Photoroom for: ' + sceneData.key);
 
-  var productMeta = await sharp(product).metadata();
-  var left = Math.round((width - productMeta.width) / 2);
-  var top = Math.round((height - productMeta.height) / 2 + height * 0.05);
+    var response = await fetch('https://image-api.photoroom.com/v2/edit', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey
+      },
+      body: formData
+    });
 
-  var shadowBuf = await sharp(product)
-    .resize(Math.round(productMeta.width * 0.9), Math.round(productMeta.height * 0.12))
-    .blur(20)
-    .modulate({ brightness: 0 })
-    .ensureAlpha(0.15)
-    .png()
-    .toBuffer();
+    if (!response.ok) {
+      var errText = await response.text();
+      console.log('[Scenes] Photoroom failed for ' + sceneData.key + ': ' + response.status + ' - ' + errText.substring(0, 200));
+      return {
+        name: sceneData.name,
+        key: sceneData.key,
+        image: createSvgFallback(sceneData.key, sceneData.name),
+        provider: 'fallback'
+      };
+    }
 
-  return sharp(background)
-    .composite([
-      { input: shadowBuf, left: left + Math.round(productMeta.width * 0.05), top: top + productMeta.height - Math.round(productMeta.height * 0.02), blend: 'over' },
-      { input: product, left: left, top: top, blend: 'over' }
-    ])
-    .jpeg({ quality: 92 })
-    .toBuffer();
+    var arrayBuffer = await response.arrayBuffer();
+    var base64 = Buffer.from(arrayBuffer).toString('base64');
+    var contentType = response.headers.get('content-type') || 'image/png';
+    console.log('[Scenes] SUCCESS for ' + sceneData.key + ' (' + contentType + ', ' + Math.round(arrayBuffer.byteLength / 1024) + 'KB)');
+
+    return {
+      name: sceneData.name,
+      key: sceneData.key,
+      image: 'data:' + contentType + ';base64,' + base64,
+      provider: 'photoroom'
+    };
+  } catch (err) {
+    console.log('[Scenes] Error for ' + sceneData.key + ': ' + err.message);
+    return {
+      name: sceneData.name,
+      key: sceneData.key,
+      image: createSvgFallback(sceneData.key, sceneData.name),
+      provider: 'fallback'
+    };
+  }
 }
 
 export default async function handler(req, res) {
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    var { image, scenes: requestedScenes } = req.body;
-    if (!image) return res.status(400).json({ error: 'Image is required' });
+    var body = req.body;
+    var imageBase64 = body.image;
+    if (!imageBase64) return res.status(400).json({ error: 'Missing image' });
 
-    var base64Data = image.replace(/^data:image\/\w+;base64,/, '');
-    var imageBuffer = Buffer.from(base64Data, 'base64');
-    var width = 1200;
-    var height = 1200;
+    imageBase64 = stripDataPrefix(imageBase64);
+    var imageBuffer = Buffer.from(imageBase64, 'base64');
 
-    var selectedScenes = requestedScenes ? SCENES.filter(function(s) { return requestedScenes.includes(s.id); }) : SCENES;
-    var hasPhotoroom = !!process.env.PHOTOROOM_API_KEY;
+    console.log('[Scenes] Processing 8 scenes, Photoroom: ' + (!!process.env.PHOTOROOM_API_KEY));
 
-    console.log('[Scenes] Processing ' + selectedScenes.length + ' scenes, Photoroom: ' + hasPhotoroom);
-
-    var results = await Promise.all(
-      selectedScenes.map(async function(scene) {
-        try {
-          var sceneBuffer;
-          var usedProvider = 'sharp';
-
-          if (hasPhotoroom) {
-            try {
-              sceneBuffer = await generateWithPhotoroom(imageBuffer, scene.prompt);
-              sceneBuffer = await sharp(sceneBuffer).resize(width, height, { fit: 'cover' }).jpeg({ quality: 92 }).toBuffer();
-              usedProvider = 'photoroom';
-              console.log('[Scenes] Photoroom SUCCESS for ' + scene.id);
-            } catch (e) {
-              console.error('[Scenes] Photoroom failed for ' + scene.id + ':', e.message);
-              sceneBuffer = await generateWithSharp(imageBuffer, scene, width, height);
-            }
-          } else {
-            sceneBuffer = await generateWithSharp(imageBuffer, scene, width, height);
-          }
-
-          return {
-            id: scene.id,
-            name: scene.name,
-            image: 'data:image/jpeg;base64,' + sceneBuffer.toString('base64'),
-            success: true,
-            provider: usedProvider
-          };
-        } catch (err) {
-          return { id: scene.id, name: scene.name, success: false, error: err.message };
-        }
-      })
+    var results = await Promise.allSettled(
+      SCENES.map(function(scene) { return generateScene(scene, imageBuffer); })
     );
 
-    return res.status(200).json({
-      scenes: results.filter(function(r) { return r.success; }),
-      errors: results.filter(function(r) { return !r.success; }),
-      total: results.length
+    var scenes = results.map(function(r, i) {
+      if (r.status === 'fulfilled') return r.value;
+      console.log('[Scenes] Promise rejected for ' + SCENES[i].key + ': ' + r.reason);
+      return {
+        name: SCENES[i].name,
+        key: SCENES[i].key,
+        image: createSvgFallback(SCENES[i].key, SCENES[i].name),
+        provider: 'fallback'
+      };
     });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+
+    var successCount = scenes.filter(function(s) { return s.provider === 'photoroom'; }).length;
+    console.log('[Scenes] Done: ' + successCount + '/8 via Photoroom');
+
+    return res.status(200).json({ success: true, scenes: scenes });
+  } catch (err) {
+    console.log('[Scenes] Fatal error: ' + err.message);
+    return res.status(500).json({ error: err.message });
   }
 }
