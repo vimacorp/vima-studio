@@ -1,68 +1,91 @@
 import sharp from 'sharp';
 
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 120 };
 
-const SCENES = [
-  { id: 'living-room', name: 'Sala de Estar', bg: { r: 245, g: 235, b: 220 }, accent: { r: 180, g: 140, b: 100 }, shadow: 0.15 },
-  { id: 'kitchen', name: 'Cozinha', bg: { r: 240, g: 245, b: 245 }, accent: { r: 160, g: 180, b: 170 }, shadow: 0.12 },
-  { id: 'office', name: 'Escrit\u00f3rio', bg: { r: 235, g: 235, b: 240 }, accent: { r: 100, g: 120, b: 150 }, shadow: 0.18 },
-  { id: 'bedroom', name: 'Quarto', bg: { r: 248, g: 240, b: 245 }, accent: { r: 180, g: 160, b: 175 }, shadow: 0.10 },
-  { id: 'outdoor', name: 'Ambiente Externo', bg: { r: 230, g: 245, b: 230 }, accent: { r: 120, g: 160, b: 120 }, shadow: 0.20 },
-  { id: 'studio', name: 'Est\u00fadio Fotogr\u00e1fico', bg: { r: 250, g: 250, b: 250 }, accent: { r: 200, g: 200, b: 200 }, shadow: 0.08 },
-  { id: 'store', name: 'Vitrine de Loja', bg: { r: 255, g: 248, b: 235 }, accent: { r: 200, g: 170, b: 120 }, shadow: 0.14 },
-  { id: 'minimalist', name: 'Minimalista', bg: { r: 245, g: 245, b: 245 }, accent: { r: 220, g: 220, b: 220 }, shadow: 0.06 }
+var SCENES = [
+  { id: 'living-room', name: 'Sala de Estar', prompt: 'modern living room warm lighting wooden furniture cozy interior design', bg: { r: 245, g: 235, b: 220 }, accent: { r: 180, g: 140, b: 100 } },
+  { id: 'kitchen', name: 'Cozinha', prompt: 'modern kitchen countertop marble surface bright clean kitchen natural light', bg: { r: 240, g: 245, b: 245 }, accent: { r: 160, g: 180, b: 170 } },
+  { id: 'office', name: 'Escritorio', prompt: 'professional office desk modern workspace clean organized desk', bg: { r: 235, g: 235, b: 240 }, accent: { r: 100, g: 120, b: 150 } },
+  { id: 'bedroom', name: 'Quarto', prompt: 'elegant bedroom soft bedding warm ambient lighting peaceful', bg: { r: 248, g: 240, b: 245 }, accent: { r: 180, g: 160, b: 175 } },
+  { id: 'outdoor', name: 'Ambiente Externo', prompt: 'outdoor garden patio natural greenery sunlit terrace fresh', bg: { r: 230, g: 245, b: 230 }, accent: { r: 120, g: 160, b: 120 } },
+  { id: 'studio', name: 'Estudio Fotografico', prompt: 'professional photo studio clean white backdrop studio lighting product photography', bg: { r: 250, g: 250, b: 250 }, accent: { r: 200, g: 200, b: 200 } },
+  { id: 'store', name: 'Vitrine de Loja', prompt: 'luxury store display elegant retail shelf boutique shop interior premium', bg: { r: 255, g: 248, b: 235 }, accent: { r: 200, g: 170, b: 120 } },
+  { id: 'minimalist', name: 'Minimalista', prompt: 'minimalist white surface clean scandinavian design soft shadow elegant simplicity', bg: { r: 245, g: 245, b: 245 }, accent: { r: 220, g: 220, b: 220 } }
 ];
 
-async function createSceneImage(imageBuffer, scene, width, height) {
-  const bg = scene.bg;
-  const ac = scene.accent;
+async function generateWithPhotoroom(imageBuffer, prompt) {
+  var apiKey = process.env.PHOTOROOM_API_KEY;
+  if (!apiKey) throw new Error('No Photoroom API key');
 
-  const svgBg = `<svg width="${width}" height="${height}">
-    <defs>
-      <radialGradient id="g1" cx="50%" cy="40%" r="70%">
-        <stop offset="0%" stop-color="rgb(${bg.r},${bg.g},${bg.b})"/>
-        <stop offset="100%" stop-color="rgb(${Math.max(0,bg.r-25)},${Math.max(0,bg.g-25)},${Math.max(0,bg.b-25)})"/>
-      </radialGradient>
-      <linearGradient id="g2" x1="0" y1="1" x2="0" y2="0">
-        <stop offset="0%" stop-color="rgb(${ac.r},${ac.g},${ac.b})" stop-opacity="0.3"/>
-        <stop offset="40%" stop-color="rgb(${ac.r},${ac.g},${ac.b})" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#g1)"/>
-    <rect width="100%" height="100%" fill="url(#g2)"/>
-    <ellipse cx="50%" cy="88%" rx="35%" ry="4%" fill="rgba(${ac.r},${ac.g},${ac.b},0.15)"/>
-  </svg>`;
+  var blob = new Blob([imageBuffer], { type: 'image/png' });
+  var formData = new FormData();
+  formData.append('image_file', blob, 'image.png');
+  formData.append('prompt', prompt);
 
-  const background = await sharp(Buffer.from(svgBg)).resize(width, height).png().toBuffer();
+  var response = await fetch('https://sdk.photoroom.com/v1/instant-backgrounds', {
+    method: 'POST',
+    headers: { 'x-api-key': apiKey },
+    body: formData
+  });
 
-  const productW = Math.round(width * 0.65);
-  const productH = Math.round(height * 0.65);
-  const product = await sharp(imageBuffer)
+  if (!response.ok) {
+    var err = await response.text();
+    throw new Error('Photoroom ' + response.status + ': ' + err);
+  }
+
+  var arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+async function generateWithSharp(imageBuffer, scene, width, height) {
+  var bg = scene.bg;
+  var ac = scene.accent;
+
+  var svgBg = '<svg width="' + width + '" height="' + height + '">' +
+    '<defs>' +
+    '<radialGradient id="g1" cx="50%" cy="30%" r="80%">' +
+    '<stop offset="0%" stop-color="rgb(' + bg.r + ',' + bg.g + ',' + bg.b + ')"/>' +
+    '<stop offset="100%" stop-color="rgb(' + Math.max(0, bg.r - 30) + ',' + Math.max(0, bg.g - 30) + ',' + Math.max(0, bg.b - 30) + ')"/>' +
+    '</radialGradient>' +
+    '<linearGradient id="floor" x1="0" y1="0.6" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="rgb(' + ac.r + ',' + ac.g + ',' + ac.b + ')" stop-opacity="0.15"/>' +
+    '<stop offset="100%" stop-color="rgb(' + ac.r + ',' + ac.g + ',' + ac.b + ')" stop-opacity="0.4"/>' +
+    '</linearGradient>' +
+    '</defs>' +
+    '<rect width="100%" height="100%" fill="url(#g1)"/>' +
+    '<rect y="60%" width="100%" height="40%" fill="url(#floor)"/>' +
+    '<line x1="0" y1="60%" x2="100%" y2="60%" stroke="rgb(' + ac.r + ',' + ac.g + ',' + ac.b + ')" stroke-opacity="0.1" stroke-width="1"/>' +
+    '<ellipse cx="50%" cy="90%" rx="40%" ry="5%" fill="rgba(0,0,0,0.08)"/>' +
+    '</svg>';
+
+  var background = await sharp(Buffer.from(svgBg)).resize(width, height).png().toBuffer();
+
+  var productW = Math.round(width * 0.60);
+  var productH = Math.round(height * 0.65);
+  var product = await sharp(imageBuffer)
     .resize(productW, productH, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();
 
-  const productMeta = await sharp(product).metadata();
-  const left = Math.round((width - productMeta.width) / 2);
-  const top = Math.round((height - productMeta.height) / 2 + height * 0.05);
+  var productMeta = await sharp(product).metadata();
+  var left = Math.round((width - productMeta.width) / 2);
+  var top = Math.round((height - productMeta.height) / 2 + height * 0.05);
 
-  const shadowBuf = await sharp(product)
-    .resize(Math.round(productMeta.width * 0.95), Math.round(productMeta.height * 0.15))
-    .blur(15)
+  var shadowBuf = await sharp(product)
+    .resize(Math.round(productMeta.width * 0.9), Math.round(productMeta.height * 0.12))
+    .blur(20)
     .modulate({ brightness: 0 })
-    .ensureAlpha(scene.shadow)
+    .ensureAlpha(0.15)
     .png()
     .toBuffer();
 
-  const result = await sharp(background)
+  return sharp(background)
     .composite([
-      { input: shadowBuf, left: left + Math.round(productMeta.width * 0.025), top: top + productMeta.height - Math.round(productMeta.height * 0.05), blend: 'over' },
-      { input: product, left, top, blend: 'over' }
+      { input: shadowBuf, left: left + Math.round(productMeta.width * 0.05), top: top + productMeta.height - Math.round(productMeta.height * 0.02), blend: 'over' },
+      { input: product, left: left, top: top, blend: 'over' }
     ])
-    .jpeg({ quality: 90 })
+    .jpeg({ quality: 92 })
     .toBuffer();
-
-  return result;
 }
 
 export default async function handler(req, res) {
@@ -73,36 +96,49 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   try {
-    const { image, scenes: requestedScenes } = req.body;
+    var { image, scenes: requestedScenes } = req.body;
     if (!image) return res.status(400).json({ error: 'Image is required' });
 
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
-    const imageBuffer = Buffer.from(base64Data, 'base64');
+    var base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    var imageBuffer = Buffer.from(base64Data, 'base64');
+    var width = 1200;
+    var height = 1200;
 
-    const width = 1200;
-    const height = 1200;
+    var selectedScenes = requestedScenes ? SCENES.filter(function(s) { return requestedScenes.includes(s.id); }) : SCENES;
+    var hasPhotoroom = !!process.env.PHOTOROOM_API_KEY;
 
-    const selectedScenes = requestedScenes
-      ? SCENES.filter(s => requestedScenes.includes(s.id))
-      : SCENES;
+    console.log('[Scenes] Processing ' + selectedScenes.length + ' scenes, Photoroom: ' + hasPhotoroom);
 
-    const results = await Promise.all(
-      selectedScenes.map(async (scene) => {
+    var results = await Promise.all(
+      selectedScenes.map(async function(scene) {
         try {
-          const sceneBuffer = await createSceneImage(imageBuffer, scene, width, height);
-          const base64 = sceneBuffer.toString('base64');
+          var sceneBuffer;
+          var usedProvider = 'sharp';
+
+          if (hasPhotoroom) {
+            try {
+              sceneBuffer = await generateWithPhotoroom(imageBuffer, scene.prompt);
+              sceneBuffer = await sharp(sceneBuffer).resize(width, height, { fit: 'cover' }).jpeg({ quality: 92 }).toBuffer();
+              usedProvider = 'photoroom';
+              console.log('[Scenes] Photoroom SUCCESS for ' + scene.id);
+            } catch (e) {
+              console.error('[Scenes] Photoroom failed for ' + scene.id + ':', e.message);
+              sceneBuffer = await generateWithSharp(imageBuffer, scene, width, height);
+            }
+          } else {
+            sceneBuffer = await generateWithSharp(imageBuffer, scene, width, height);
+          }
+
           return {
             id: scene.id,
             name: scene.name,
-            image: `data:image/jpeg;base64,${base64}`,
-            success: true
+            image: 'data:image/jpeg;base64,' + sceneBuffer.toString('base64'),
+            success: true,
+            provider: usedProvider
           };
         } catch (err) {
           return { id: scene.id, name: scene.name, success: false, error: err.message };
@@ -111,8 +147,8 @@ export default async function handler(req, res) {
     );
 
     return res.status(200).json({
-      scenes: results.filter(r => r.success),
-      errors: results.filter(r => !r.success),
+      scenes: results.filter(function(r) { return r.success; }),
+      errors: results.filter(function(r) { return !r.success; }),
       total: results.length
     });
   } catch (error) {
