@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIMA Studio - Gere Anúncios com IA</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark: #0A0A0A;
+            --accent: #E8B923;
+            --gray-900: #111111;
+            --gray-800: #1a1a1a;
+            --gray-700: #2a2a2a;
+            --gray-600: #3a3a3a;
+            --gray-500: #4a4a4a;
+            --gray-400: #6a6a6a;
+            --gray-300: #8a8a8a;
+            --gray-200: #a0a0a0;
+            --gray-100: #d0d0d0;
+            --white: #ffffff;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--dark);
+            color: var(--gray-100);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 2rem;
+            line-height: 1.2;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+        }
+
+        p {
+            color: var(--gray-300);
+            margin-bottom: 1rem;
+        }
+
+        /* Forms */
+        input, textarea, select {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--gray-800);
+            border: 1px solid var(--gray-700);
+            color: var(--white);
+            padding: 0.875rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            background-color: var(--gray-900);
+            box-shadow: 0 0 0 3px rgba(232, 185, 35, 0.1);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--gray-400);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            text-decoration: none;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--dark);
+        }
+
+        .btn-primary:hover {
+            background-color: #f0c530;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(232, 185, 35, 0.2);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background-color: var(--gray-800);
+            color: var(--white);
+            border: 1px solid var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--gray-700);
+            border-color: var(--gray-600);
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .btn-ghost:hover {
+            background-color: rgba(232, 185, 35, 0.1);
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-block {
+            width: 100%;
+            display: block;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #f0c530;
+        }
+
+        /* Main Layout */
+        #app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: var(--gray-900);
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            overflow-y: auto;
+            border-right: 1px solid var(--gray-800);
+            display: none;
+        }
+
+        .sidebar.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-logo {
+            padding: 0 2rem;
+            margin-bottom: 2rem;
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .sidebar-logo span {
+            color: var(--accent);
+        }
+
+        .nav-items {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-item {
+            padding: 0.875rem 2rem;
+            color: var(--gray-400);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-item:hover {
+            background-color: var(--gray-800);
+            color: var(--white);
+        }
+
+        .nav-item.active {
+            background-color: rgba(232, 185, 35, 0.1);
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .nav-icon {
+            font-size: 1.25rem;
+        }
+
+        .sidebar-user {
+            padding: 2rem;
+            border-top: 1px solid var(--gray-800);
+            margin-top: auto;
+        }
+
+        .user-info {
+            margin-bottom: 1rem;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .user-email {
+            font-size: 0.875rem;
+            color: var(--gray-400);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 0;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.with-sidebar {
+            margin-left: 280px;
+        }
+
+        .page {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .page.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Login & Register Pages */
+        .auth-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--gray-900) 100%);
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 2rem;
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.875rem;
+            font-weight: 800;
+        }
+
+        .auth-logo span {
+            color: var(--accent);
+        }
+
+        .auth-title {
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-subtitle {
+            text-align: center;
+            color: var(--gray-400);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-200);
+            font-size: 0.875rem;
+        }
+
+        .form-help {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--gray-400);
+        }
+
+        .auth-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .auth-links a {
+            margin-left: 0.25rem;
+        }
+
+        /* Dashboard */
+        .dashboard-header {
+            background-color: var(--gray-900);
+            padding: 2rem;
+            border-bottom: 1px solid var(--gray-800);
+        }
+
+        .welcome-section {
+            margin-bottom: 2rem;
+        }
+
+        .welcome-title {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-subtitle {
+            color: var(--gray-400);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--gray-900);
+            border: 1px solid var(--gray-800);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+        }
+
+        .stat-label {
+            color: var(--gray-400);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .action-buttons {
+            padding: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        /* New Listing Page */
+        .listing-container {
+            padding: 2rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .listing-header {
+            margin-bottom: 2rem;
+        }
+
+        .listing-form {
+            background-color: var(--gray-900);
+            border: 1px solid var(--gray-800);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed var(--gray-700);
+            border-radius: 0.75rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: rgba(232, 185, 35, 0.02);
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background-color: rgba(232, 185, 35, 0.05);
+        }
+
+        .upload-area.dragging {
+            border-color: var(--accent);
+            background-color: rgba(232, 185, 35, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+
+        .upload-text {
+            color: var(--gray-300);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            color: var(--gray-400);
+            font-size: 0.875rem;
+        }
+
+        #photoInput {
+            display: none;
+        }
+
+        .image-preview {
+            margin-top: 1.5rem;
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            display: none;
+        }
+
+        .image-preview.active {
+            display: block;
+            max-height: 400px;
+            object-fit: contain;
+        }
+
+        .remove-image {
+            margin-top: 1rem;
+            background-color: var(--error);
+        }
+
+        .remove-image:hover {
+            background-color: #dc2626;
+        }
+
+        /* Results Section */
+        .results-section {
+            background-color: var(--gray-900);
+            border: 1px solid var(--gray-800);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .result-field {
+            margin-bottom: 2rem;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .result-value {
+            background-color: var(--gray-800);
+            border: 1px solid var(--gray-700);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            color: var(--white);
+            word-break: break-word;
+            min-height: 2.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .result-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .copy-btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* My Listings Page */
+        .listings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .listing-card {
+            background-color: var(--gray-900);
+            border: 1px solid var(--gray-800);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .listing-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+        }
+
+        .listing-card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-800);
+        }
+
+        .listing-marketplace {
+            display: inline-block;
+            background-color: rgba(232, 185, 35, 0.1);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .listing-title {
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .listing-date {
+            font-size: 0.875rem;
+            color: var(--gray-400);
+        }
+
+        .listing-card-body {
+            padding: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .listing-card-body .btn {
+            flex: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            opacity: 0.3;
+            margin-bottom: 1rem;
+        }
+
+        .empty-title {
+            color: var(--gray-200);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-text {
+            color: var(--gray-400);
+            margin-bottom: 2rem;
+        }
+
+        /* Settings Page */
+        .settings-container {
+            padding: 2rem;
+            max-width: 600px;
+        }
+
+        .settings-section {
+            background-color: var(--gray-900);
+            border: 1px solid var(--gray-800);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .settings-title {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: var(--white);
+        }
+
+        .danger-zone {
+            border-color: var(--error);
+            background-color: rgba(239, 68, 68, 0.05);
+        }
+
+        .danger-title {
+            color: var(--error);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(232, 185, 35, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(10, 10, 10, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            text-align: center;
+        }
+
+        .loading-spinner .spinner {
+            width: 50px;
+            height: 50px;
+            border-width: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .loading-text {
+            color: var(--gray-300);
+            font-size: 1rem;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1001;
+        }
+
+        .toast {
+            background-color: var(--gray-900);
+            border: 1px solid var(--gray-800);
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            min-width: 300px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        .toast.error {
+            border-color: var(--error);
+        }
+
+        .toast.warning {
+            border-color: var(--warning);
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .toast.success .toast-icon {
+            color: var(--success);
+        }
+
+        .toast.error .toast-icon {
+            color: var(--error);
+        }
+
+        .toast.warning .toast-icon {
+            color: var(--warning);
+        }
+
+        .toast-message {
+            flex: 1;
+            color: var(--white);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 1.25rem;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .toast-close:hover {
+            color: var(--white);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1px solid var(--gray-800);
+                flex-direction: row;
+                padding: 1rem 2rem;
+                align-items: center;
+            }
+
+            .sidebar.active {
+                flex-direction: row;
+            }
+
+            .sidebar-logo {
+                padding: 0;
+                margin-bottom: 0;
+                margin-right: 2rem;
+            }
+
+            .nav-items {
+                flex-direction: row;
+                gap: 1rem;
+            }
+
+            .nav-item {
+                padding: 0.5rem 1rem;
+                border-left: none;
+                border-bottom: 2px solid transparent;
+            }
+
+            .nav-item.active {
+                border-left: none;
+                border-bottom-color: var(--accent);
+            }
+
+            .sidebar-user {
+                padding: 0;
+                margin-left: auto;
+                border: none;
+                margin-top: 0;
+            }
+
+            .main-content.with-sidebar {
+                margin-left: 0;
+            }
+
+            h1 {
+                font-size: 1.875rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .listings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-container {
+                padding: 1.5rem;
+            }
+
+            .toast-container {
+                bottom: 1rem;
+                right: 1rem;
+            }
+
+            .toast {
+                min-width: 280px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .btn {
+                padding: 0.75rem 1.5rem;
+                font-size: 0.875rem;
+            }
+
+            .listing-form {
+                padding: 1.5rem;
+            }
+
+            .settings-container {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .result-buttons {
+                flex-direction: column;
+            }
+
+            .copy-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                VIMA <span>STUDIO</span>
+            </div>
+            <div class="nav-items" id="navItems">
+                <div class="nav-item" data-page="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" data-page="new-listing">
+                    <span class="nav-icon">➕</span>
+                    <span>Novo Anúncio</span>
+                </div>
+                <div class="nav-item" data-page="my-listings">
+                    <span class="nav-icon">📋</span>
+                    <span>Meus Anúncios</span>
+                </div>
+                <div class="nav-item" data-page="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Configurações</span>
+                </div>
+            </div>
+            <div class="sidebar-user">
+                <div class="user-info">
+                    <div class="user-name" id="sidebarUserName">Usuário</div>
+                    <div class="user-email" id="sidebarUserEmail">email@example.com</div>
+                </div>
+                <button class="btn btn-secondary btn-small btn-block" onclick="app.logout()">
+                    Sair
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content" id="mainContent">
+            <!-- Login Page -->
+            <div id="login" class="page auth-page active">
+                <div class="auth-container">
+                    <div class="auth-logo">
+                        VIMA <span>STUDIO</span>
+                    </div>
+                    <h2 class="auth-title">Bem-vindo de volta</h2>
+                    <p class="auth-subtitle">Faça login para acessar sua conta</p>
+
+                    <form id="loginForm" onsubmit="app.handleLogin(event)">
+                        <div class="form-group">
+                            <label class="form-label" for="loginEmail">Email</label>
+                            <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="loginPassword">Senha</label>
+                            <input type="password" id="loginPassword" placeholder="••••••••" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+                            Entrar
+                        </button>
+                    </form>
+
+                    <div class="auth-links">
+                        Não tem conta? <a href="#register">Criar conta</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register Page -->
+            <div id="register" class="page auth-page">
+                <div class="auth-container">
+                    <div class="auth-logo">
+                        VIMA <span>STUDIO</span>
+                    </div>
+                    <h2 class="auth-title">Criar conta</h2>
+                    <p class="auth-subtitle">Junte-se a VIMA Studio hoje</p>
+
+                    <form id="registerForm" onsubmit="app.handleRegister(event)">
+                        <div class="form-group">
+                            <label class="form-label" for="registerName">Nome completo</label>
+                            <input type="text" id="registerName" placeholder="João Silva" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="registerEmail">Email</label>
+                            <input type="email" id="registerEmail" placeholder="seu@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="registerPassword">Senha</label>
+                            <input type="password" id="registerPassword" placeholder="••••••••" minlength="6" required>
+                            <div class="form-help">Mínimo de 6 caracteres</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="registerPasswordConfirm">Confirmar senha</label>
+                            <input type="password" id="registerPasswordConfirm" placeholder="••••••••" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
+                            Criar conta
+                        </button>
+                    </form>
+
+                    <div class="auth-links">
+                        Já tem conta? <a href="#login">Fazer login</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page">
+                <div class="dashboard-header">
+                    <div class="welcome-section">
+                        <h1 class="welcome-title">Olá, <span id="userNameDisplay">Usuário</span>! 👋</h1>
+                        <p class="welcome-subtitle">Bem-vindo ao VIMA Studio - Seu assistente de anúncios com IA</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="stat-label">Anúncios Criados</div>
+                        <div class="stat-value" id="statCreated">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Créditos Restantes</div>
+                        <div class="stat-value" id="statCredits">50</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Anúncios Salvos</div>
+                        <div class="stat-value" id="statSaved">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Taxa de Conversão</div>
+                        <div class="stat-value" id="statConversion">—</div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary btn-large" onclick="app.navigateTo('new-listing')">
+                        ✨ Criar Novo Anúncio
+                    </button>
+                </div>
+            </div>
+
+            <!-- New Listing Page -->
+            <div id="new-listing" class="page">
+                <div class="listing-container">
+                    <div class="listing-header">
+                        <h1>Criar Novo Anúncio</h1>
+                        <p>Carregue uma foto do seu produto e deixe a IA gerar um anúncio otimizado</p>
+                    </div>
+
+                    <div class="listing-form">
+                        <!-- Upload Section -->
+                        <div class="form-section">
+                            <div class="form-section-title">1. Carregue uma Foto</div>
+                            <div class="upload-area" id="uploadArea" ondrop="app.handleDrop(event)" ondragover="app.handleDragOver(event)" ondragleave="app.handleDragLeave(event)" onclick="document.getElementById('photoInput').click()">
+                                <div class="upload-icon">📸</div>
+                                <div class="upload-text">Arraste sua foto aqui ou clique para selecionar</div>
+                                <div class="upload-hint">Formatos suportados: JPG, PNG, WebP (máx. 5MB)</div>
+                            </div>
+                            <input type="file" id="photoInput" accept="image/*" onchange="app.handlePhotoUpload(event)">
+                            <img id="photoPreview" class="image-preview" alt="Preview da foto">
+                            <button type="button" class="btn btn-secondary remove-image" id="removeImageBtn" style="display: none;" onclick="app.removePhoto()">
+                                Remover Foto
+                            </button>
+                        </div>
+
+                        <!-- Marketplace Section -->
+                        <div class="form-section">
+                            <div class="form-section-title">2. Escolha o Marketplace</div>
+                            <div class="form-group">
+                                <select id="marketplaceSelect">
+                                    <option value="">-- Selecione um marketplace --</option>
+                                    <option value="mercadolivre">Mercado Livre</option>
+                                    <option value="amazon">Amazon</option>
+                                    <option value="shopee">Shopee</option>
+                                    <option value="tiktokshop">TikTok Shop</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <button type="button" class="btn btn-primary btn-block" id="generateBtn" onclick="app.generateListing()" disabled>
+                            🤖 Gerar Anúncio com IA
+                        </button>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div class="results-section" id="resultsSection">
+                        <h2 style="margin-bottom: 2rem;">Seu Anúncio Gerado</h2>
+
+                        <div class="result-field">
+                            <div class="result-label">Título</div>
+                            <div class="result-value" id="resultTitle">—</div>
+                            <div class="result-buttons">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultTitle', 'Título')">
+                                    📋 Copiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="result-field">
+                            <div class="result-label">Descrição</div>
+                            <div class="result-value" id="resultDescription" style="min-height: 150px; align-items: flex-start; white-space: pre-wrap;">—</div>
+                            <div class="result-buttons">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultDescription', 'Descrição')">
+                                    📋 Copiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="result-field">
+                            <div class="result-label">Palavras-chave</div>
+                            <div class="result-value" id="resultKeywords">—</div>
+                            <div class="result-buttons">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultKeywords', 'Palavras-chave')">
+                                    📋 Copiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="result-field">
+                            <div class="result-label">Categoria Sugerida</div>
+                            <div class="result-value" id="resultCategory">—</div>
+                            <div class="result-buttons">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultCategory', 'Categoria')">
+                                    📋 Copiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="result-field">
+                            <div class="result-label">Faixa de Preço Sugerida</div>
+                            <div class="result-value" id="resultPrice">—</div>
+                            <div class="result-buttons">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultPrice', 'Faixa de Preço')">
+                                    📋 Copiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-block" onclick="app.saveListing()" style="margin-top: 2rem;">
+                            💾 Salvar Anúncio
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Listings Page -->
+            <div id="my-listings" class="page">
+                <div class="listing-container">
+                    <div class="listing-header">
+                        <h1>Meus Anúncios</h1>
+                        <p>Visualize e gerencie todos os seus anúncios salvos</p>
+                    </div>
+
+                    <div id="listingsEmpty" class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <h3 class="empty-title">Nenhum anúncio salvo ainda</h3>
+                        <p class="empty-text">Crie seu primeiro anúncio com a IA para começar</p>
+                        <button class="btn btn-primary" onclick="app.navigateTo('new-listing')">
+                            Criar Anúncio
+                        </button>
+                    </div>
+
+                    <div class="listings-grid" id="listingsGrid" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings" class="page">
+                <div class="listing-container">
+                    <div class="listing-header">
+                        <h1>Configurações</h1>
+                        <p>Gerencie suas preferências e dados de conta</p>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="settings-title">Informações da Conta</h3>
+                        <div class="form-group">
+                            <label class="form-label">Nome</label>
+                            <input type="text" id="settingsName" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="settingsEmail" disabled>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="settings-title">Preferências</h3>
+                        <div class="form-group">
+                            <label class="form-label" for="settingsLanguage">Idioma</label>
+                            <select id="settingsLanguage">
+                                <option value="pt-BR" selected>Português (Brasil)</option>
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section danger-zone">
+                        <h3 class="settings-title danger-title">Zona de Perigo</h3>
+                        <p>Essas ações não podem ser desfeitas.</p>
+                        <button class="btn btn-secondary" onclick="app.handleDeleteAccount()" style="border-color: var(--error); color: var(--error);">
+                            🗑️ Deletar Conta Permanentemente
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loadingText">Processando...</div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ============================================================================
+        // VIMA Studio SPA Application
+        // ============================================================================
+
+        class VimaApp {
+            constructor() {
+                // Supabase Configuration
+                // NOTE: These are public credentials (anon key) - OK for client-side usage
+                this.SUPABASE_URL = 'https://eokuwjumkqpuhxjsyxvy.supabase.co';
+                this.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVva3V3anVta3FwdWh4anN5eHZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxNTI2MDMsImV4cCI6MjA1OTcyODYwM30.sfnFfHUc3HHG78JeyDnOcA_DmLMiRQh-XB-UGiJMQ2Q';
+
+                // Initialize Supabase
+                const { createClient } = window.supabase;
+                this.supabase = createClient(this.SUPABASE_URL, this.SUPABASE_KEY);
+
+                // App state
+                this.currentUser = null;
+                this.currentListing = {
+                    photo: null,
+                    marketplace: null,
+                    result: null
+                };
+
+                // Initialize app
+                this.init();
+            }
+
+            async init() {
+                // Check authentication state
+                await this.checkAuth();
+
+                // Setup event listeners
+                this.setupEventListeners();
+
+                // Setup hash routing
+                window.addEventListener('hashchange', () => this.handleRoute());
+                this.handleRoute();
+            }
+
+            setupEventListeners() {
+                // Photo input change
+                document.getElementById('photoInput').addEventListener('change', (e) => {
+                    this.handlePhotoUpload(e);
+                });
+
+                // Marketplace select
+                document.getElementById('marketplaceSelect').addEventListener('change', (e) => {
+                    this.updateGenerateButtonState();
+                });
+
+                // Sidebar navigation
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const page = item.dataset.page;
+                        this.navigateTo(page);
+                    });
+                });
+            }
+
+            async checkAuth() {
+                try {
+                    const { data: { user } } = await this.supabase.auth.getUser();
+                    this.currentUser = user;
+
+                    if (user) {
+                        this.updateUserUI();
+                    }
+                } catch (error) {
+                    console.error('Auth check error:', error);
+                }
+            }
+
+            updateUserUI() {
+                if (this.currentUser) {
+                    const name = this.currentUser.user_metadata?.name || 'Usuário';
+                    document.getElementById('userNameDisplay').textContent = name;
+                    document.getElementById('sidebarUserName').textContent = name;
+                    document.getElementById('sidebarUserEmail').textContent = this.currentUser.email;
+                    document.getElementById('settingsName').value = name;
+                    document.getElementById('settingsEmail').value = this.currentUser.email;
+                }
+            }
+
+            handleRoute() {
+                const hash = window.location.hash.slice(1) || 'login';
+                const currentUser = this.currentUser;
+
+                // Public pages
+                const publicPages = ['login', 'register'];
+
+                // If not authenticated and trying to access protected page, redirect to login
+                if (!currentUser && !publicPages.includes(hash)) {
+                    window.location.hash = '#login';
+                    return;
+                }
+
+                // If authenticated and trying to access auth pages, redirect to dashboard
+                if (currentUser && publicPages.includes(hash)) {
+                    window.location.hash = '#dashboard';
+                    return;
+                }
+
+                // Show/hide sidebar based on auth state
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('mainContent');
+
+                if (currentUser && !publicPages.includes(hash)) {
+                    sidebar.classList.add('active');
+                    mainContent.classList.add('with-sidebar');
+                } else {
+                    sidebar.classList.remove('active');
+                    mainContent.classList.remove('with-sidebar');
+                }
+
+                // Show the requested page
+                this.showPage(hash);
+            }
+
+            showPage(pageName) {
+                // Hide all pages
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+
+                // Show requested page
+                const page = document.getElementById(pageName);
+                if (page) {
+                    page.classList.add('active');
+                }
+
+                // Update active nav item
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.page === pageName) {
+                        item.classList.add('active');
+                    }
+                });
+
+                // Load page-specific data
+                if (pageName === 'dashboard') {
+                    this.loadDashboard();
+                } else if (pageName === 'my-listings') {
+                    this.loadMyListings();
+                }
+            }
+
+            navigateTo(page) {
+                window.location.hash = `#${page}`;
+            }
+
+            // ================================================================
+            // Authentication
+            // ================================================================
+
+            async handleLogin(event) {
+                event.preventDefault();
+                const email = document.getElementById('loginEmail').value.trim();
+                const password = document.getElementById('loginPassword').value;
+
+                if (!email || !password) {
+                    this.showToast('Por favor, preencha todos os campos', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('loginBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span>';
+
+                try {
+                    const { data, error } = await this.supabase.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    this.currentUser = data.user;
+                    this.showToast('Login realizado com sucesso!', 'success');
+                    setTimeout(() => {
+                        window.location.hash = '#dashboard';
+                    }, 500);
+
+                } catch (error) {
+                    console.error('Login error:', error);
+                    this.showToast(error.message || 'Erro ao fazer login. Verifique suas credenciais.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Entrar';
+                }
+            }
+
+            async handleRegister(event) {
+                event.preventDefault();
+                const name = document.getElementById('registerName').value.trim();
+                const email = document.getElementById('registerEmail').value.trim();
+                const password = document.getElementById('registerPassword').value;
+                const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+
+                // Validation
+                if (!name || !email || !password || !passwordConfirm) {
+                    this.showToast('Por favor, preencha todos os campos', 'error');
+                    return;
+                }
+
+                if (password !== passwordConfirm) {
+                    this.showToast('As senhas não correspondem', 'error');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    this.showToast('A senha deve ter no mínimo 6 caracteres', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('registerBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span>';
+
+                try {
+                    const { data, error } = await this.supabase.auth.signUp({
+                        email,
+                        password,
+                        options: {
+                            data: {
+                                name: name
+                            }
+                        }
+                    });
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    this.showToast('Conta criada com sucesso! Faça login para continuar.', 'success');
+                    setTimeout(() => {
+                        window.location.hash = '#login';
+                    }, 500);
+
+                } catch (error) {
+                    console.error('Register error:', error);
+                    this.showToast(error.message || 'Erro ao criar conta', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Criar conta';
+                }
+            }
+
+            async logout() {
+                if (!confirm('Tem certeza que deseja sair?')) {
+                    return;
+                }
+
+                try {
+                    await this.supabase.auth.signOut();
+                    this.currentUser = null;
+                    window.location.hash = '#login';
+                    this.showToast('Desconectado com sucesso', 'success');
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    this.showToast('Erro ao desconectar', 'error');
+                }
+            }
+
+            // ================================================================
+            // Dashboard
+            // ================================================================
+
+            loadDashboard() {
+                // Update stats (mock data for demo)
+                document.getElementById('statCreated').textContent = '12';
+                document.getElementById('statCredits').textContent = '50';
+                document.getElementById('statSaved').textContent = '5';
+                document.getElementById('statConversion').textContent = '3.5%';
+            }
+
+            // ================================================================
+            // Photo Upload
+            // ================================================================
+
+            handleDragOver(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                document.getElementById('uploadArea').classList.add('dragging');
+            }
+
+            handleDragLeave(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                document.getElementById('uploadArea').classList.remove('dragging');
+            }
+
+            handleDrop(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                document.getElementById('uploadArea').classList.remove('dragging');
+
+                const files = event.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type.startsWith('image/')) {
+                        this.processPhoto(file);
+                    } else {
+                        this.showToast('Por favor, carregue uma imagem válida', 'error');
+                    }
+                }
+            }
+
+            handlePhotoUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    this.processPhoto(file);
+                }
+            }
+
+            processPhoto(file) {
+                // Validate file size (5MB max)
+                const maxSize = 5 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    this.showToast('Imagem muito grande. Máximo 5MB.', 'error');
+                    return;
+                }
+
+                // Read and display preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById('photoPreview');
+                    preview.src = e.target.result;
+                    preview.classList.add('active');
+                    document.getElementById('removeImageBtn').style.display = 'block';
+
+                    this.currentListing.photo = file;
+                    this.updateGenerateButtonState();
+                    this.showToast('Foto carregada com sucesso!', 'success');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            removePhoto() {
+                document.getElementById('photoInput').value = '';
+                document.getElementById('photoPreview').classList.remove('active');
+                document.getElementById('removeImageBtn').style.display = 'none';
+                this.currentListing.photo = null;
+                this.updateGenerateButtonState();
+                this.showToast('Foto removida', 'success');
+            }
+
+            // ================================================================
+            // Listing Generation
+            // ================================================================
+
+            updateGenerateButtonState() {
+                const photo = this.currentListing.photo;
+                const marketplace = document.getElementById('marketplaceSelect').value;
+                const btn = document.getElementById('generateBtn');
+
+                btn.disabled = !photo || !marketplace;
+            }
+
+            async generateListing() {
+                const marketplace = document.getElementById('marketplaceSelect').value;
+
+                if (!this.currentListing.photo || !marketplace) {
+                    this.showToast('Por favor, carregue uma foto e selecione um marketplace', 'error');
+                    return;
+                }
+
+                // Show loading
+                this.showLoading('Gerando anúncio com IA...');
+
+                try {
+                    // Simulate API call delay (in production, this would call real API)
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+
+                    // Generate mock listing based on marketplace
+                    const listing = this.generateMockListing(marketplace);
+                    this.currentListing.result = listing;
+
+                    // Display results
+                    this.displayResults(listing);
+                    this.showToast('Anúncio gerado com sucesso!', 'success');
+
+                } catch (error) {
+                    console.error('Generation error:', error);
+                    this.showToast('Erro ao gerar anúncio. Tente novamente.', 'error');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            generateMockListing(marketplace) {
+                // Mock data based on marketplace
+                // In production, replace this with actual API call to your AI service
+                // Example: const response = await fetch('/api/generate-listing', { ... })
+
+                const mockData = {
+                    mercadolivre: {
+                        title: 'Produto Premium de Alta Qualidade - Novo e Lacrado - Entrega Rápida',
+                        description: 'Produto original e lacrado.\n\nCaracterísticas principais:\n✓ Qualidade garantida\n✓ Versão mais recente\n✓ Entrega rápida\n✓ Garantia incluída\n\nEspecificações:\n- Marca: Original\n- Modelo: Premium\n- Condição: Novo\n- Garantia: 12 meses\n\nFormas de pagamento aceitas:\n- Mercado Pago\n- Boleto\n- Débito\n\nEntregamos para todo Brasil com acompanhamento.',
+                        keywords: 'produto, qualidade, novo, original, premium',
+                        category: 'Eletrônicos > Acessórios',
+                        priceRange: 'R$ 150,00 - R$ 250,00'
+                    },
+                    amazon: {
+                        title: 'Premium Quality Product - New and Factory Sealed - Fast Shipping',
+                        description: 'Brand new, factory sealed product.\n\nKey Features:\n✓ Genuine product\n✓ Latest version\n✓ Excellent quality\n✓ Warranty included\n\nSpecifications:\n- Brand: Original\n- Model: Premium\n- Condition: Brand New\n- Warranty: 12 months\n\nPayment & Shipping:\n- Fast Amazon Prime eligible shipping\n- Returns accepted\n- Full refund guarantee',
+                        keywords: 'premium, quality, new, original, sealed',
+                        category: 'Electronics > Accessories',
+                        priceRange: '$30 - $50 USD'
+                    },
+                    shopee: {
+                        title: '【Sản Phẩm Chính Hãng】 Mới Nguyên Hộp - Chất Lượng Cao - Giao Hàng Nhanh',
+                        description: 'Sản phẩm mới, nguyên hộp, chính hãng 100%\n\nĐặc điểm nổi bật:\n✓ Chất lượng cao\n✓ Phiên bản mới nhất\n✓ Giao hàng nhanh\n✓ Bảo hành 12 tháng\n\nThông số kỹ thuật:\n- Thương hiệu: Chính hãng\n- Mẫu: Premium\n- Tình trạng: Mới\n- Bảo hành: 12 tháng\n\nThông tin giao hàng:\n- Giao hàng nhanh 1-2 ngày\n- Miễn phí trả hàng\n- Đảm bảo chất lượng',
+                        keywords: 'sản phẩm, chính hãng, mới, chất lượng, premium',
+                        category: 'Điện Tử > Phụ kiện',
+                        priceRange: '₫ 500,000 - ₫ 1,000,000'
+                    },
+                    tiktokshop: {
+                        title: '🔥 Produto Premium 100% Original - PROMOÇÃO - Frete Grátis! 🚚',
+                        description: '✨ PRODUTO ORIGINAL E LACRADO ✨\n\n🎁 Benefícios:\n✅ 100% original\n✅ Novo e lacrado\n✅ Entrega super rápida\n✅ Frete grátis acima de R$100\n\n📦 Especificações:\n• Marca: Original Importada\n• Condição: Novo\n• Garantia: 12 meses\n\n🚀 Entrega:\n• Brasil inteiro\n• 1-3 dias úteis\n• Rastreio em tempo real\n\n💬 Dúvidas?\nChat ao vivo disponível 24h!\n\n⭐ Compre com confiança!\n5+ mil avaliações positivas',
+                        keywords: 'produto, original, promoção, frete grátis, novo',
+                        category: 'Eletrônicos & Tecnologia',
+                        priceRange: 'R$ 149,90 - R$ 249,90'
+                    }
+                };
+
+                return mockData[marketplace] || mockData.mercadolivre;
+            }
+
+            displayResults(listing) {
+                document.getElementById('resultTitle').textContent = listing.title;
+                document.getElementById('resultDescription').textContent = listing.description;
+                document.getElementById('resultKeywords').textContent = listing.keywords;
+                document.getElementById('resultCategory').textContent = listing.category;
+                document.getElementById('resultPrice').textContent = listing.priceRange;
+
+                document.getElementById('resultsSection').classList.add('active');
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            copyToClipboard(elementId, fieldName) {
+                const element = document.getElementById(elementId);
+                const text = element.textContent;
+
+                navigator.clipboard.writeText(text).then(() => {
+                    this.showToast(`${fieldName} copiado para a área de transferência!`, 'success');
+                }).catch(() => {
+                    // Fallback
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    this.showToast(`${fieldName} copiado para a área de transferência!`, 'success');
+                });
+            }
+
+            async saveListing() {
+                if (!this.currentListing.result) {
+                    this.showToast('Nenhum anúncio gerado para salvar', 'error');
+                    return;
+                }
+
+                const marketplace = document.getElementById('marketplaceSelect').value;
+                const listing = {
+                    title: this.currentListing.result.title,
+                    description: this.currentListing.result.description,
+                    keywords: this.currentListing.result.keywords,
+                    category: this.currentListing.result.category,
+                    priceRange: this.currentListing.result.priceRange,
+                    marketplace: marketplace,
+                    createdAt: new Date().toISOString()
+                };
+
+                // In a real app, save to Supabase
+                // For now, save to localStorage for demo
+                let saved = JSON.parse(localStorage.getItem('vima_listings') || '[]');
+                saved.push(listing);
+                localStorage.setItem('vima_listings', JSON.stringify(saved));
+
+                this.showToast('Anúncio salvo com sucesso!', 'success');
+
+                // Reset form
+                setTimeout(() => {
+                    this.resetListingForm();
+                }, 500);
+            }
+
+            resetListingForm() {
+                document.getElementById('photoInput').value = '';
+                document.getElementById('photoPreview').classList.remove('active');
+                document.getElementById('removeImageBtn').style.display = 'none';
+                document.getElementById('marketplaceSelect').value = '';
+                document.getElementById('resultsSection').classList.remove('active');
+                this.currentListing = { photo: null, marketplace: null, result: null };
+                this.updateGenerateButtonState();
+                this.navigateTo('my-listings');
+            }
+
+            // ================================================================
+            // My Listings
+            // ================================================================
+
+            loadMyListings() {
+                const listings = JSON.parse(localStorage.getItem('vima_listings') || '[]');
+                const container = document.getElementById('listingsGrid');
+                const emptyState = document.getElementById('listingsEmpty');
+
+                if (listings.length === 0) {
+                    emptyState.style.display = 'block';
+                    container.style.display = 'none';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                container.style.display = 'grid';
+                container.innerHTML = '';
+
+                listings.reverse().forEach((listing, index) => {
+                    const date = new Date(listing.createdAt);
+                    const formattedDate = date.toLocaleDateString('pt-BR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    const card = document.createElement('div');
+                    card.className = 'listing-card';
+                    card.innerHTML = `
+                        <div class="listing-card-header">
+                            <div class="listing-marketplace">${listing.marketplace}</div>
+                            <div class="listing-title">${listing.title}</div>
+                            <div class="listing-date">${formattedDate}</div>
+                        </div>
+                        <div class="listing-card-body">
+                            <button class="btn btn-secondary btn-small" onclick="app.editListing(${listings.length - 1 - index})">
+                                ✏️ Editar
+                            </button>
+                            <button class="btn btn-secondary btn-small" onclick="app.deleteListing(${listings.length - 1 - index})">
+                                🗑️ Deletar
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            editListing(index) {
+                const listings = JSON.parse(localStorage.getItem('vima_listings') || '[]');
+                const listing = listings[listings.length - 1 - index];
+
+                document.getElementById('resultTitle').textContent = listing.title;
+                document.getElementById('resultDescription').textContent = listing.description;
+                document.getElementById('resultKeywords').textContent = listing.keywords;
+                document.getElementById('resultCategory').textContent = listing.category;
+                document.getElementById('resultPrice').textContent = listing.priceRange;
+                document.getElementById('marketplaceSelect').value = listing.marketplace;
+
+                document.getElementById('resultsSection').classList.add('active');
+                this.navigateTo('new-listing');
+            }
+
+            deleteListing(index) {
+                if (!confirm('Tem certeza que deseja deletar este anúncio?')) {
+                    return;
+                }
+
+                let listings = JSON.parse(localStorage.getItem('vima_listings') || '[]');
+                listings.splice(listings.length - 1 - index, 1);
+                localStorage.setItem('vima_listings', JSON.stringify(listings));
+
+                this.showToast('Anúncio deletado com sucesso', 'success');
+                this.loadMyListings();
+            }
+
+            // ================================================================
+            // Settings
+            // ================================================================
+
+            async handleDeleteAccount() {
+                const confirmed = confirm('Tem certeza? Esta ação não pode ser desfeita. Todos os seus dados serão deletados permanentemente.');
+
+                if (!confirmed) {
+                    return;
+                }
+
+                const doubleConfirm = prompt('Digite sua senha para confirmar a deletar sua conta:');
+                if (!doubleConfirm) {
+                    return;
+                }
+
+                this.showLoading('Deletando conta...');
+
+                try {
+                    // In a real app, you would call the API to delete the account
+                    // For now, just sign out
+                    await this.logout();
+                    this.showToast('Conta deletada com sucesso', 'success');
+                } catch (error) {
+                    console.error('Delete account error:', error);
+                    this.showToast('Erro ao deletar conta', 'error');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            // ================================================================
+            // UI Helpers
+            // ================================================================
+
+            showLoading(text = 'Processando...') {
+                document.getElementById('loadingText').textContent = text;
+                document.getElementById('loadingOverlay').classList.add('active');
+            }
+
+            hideLoading() {
+                document.getElementById('loadingOverlay').classList.remove('active');
+            }
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+
+                const icons = {
+                    success: '✓',
+                    error: '✕',
+                    warning: '⚠',
+                    info: 'ℹ'
+                };
+
+                toast.innerHTML = `
+                    <div class="toast-icon">${icons[type] || icons.info}</div>
+                    <div class="toast-message">${message}</div>
+                    <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+                `;
+
+                container.appendChild(toast);
+
+                // Auto remove after 4 seconds
+                setTimeout(() => {
+                    toast.remove();
+                }, 4000);
+            }
+        }
+
+        // Initialize app when DOM is ready
+        let app;
+        document.addEventListener('DOMContentLoaded', () => {
+            app = new VimaApp();
+        });
+    </script>
+</body>
+</html>
