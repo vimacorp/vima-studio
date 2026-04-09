@@ -1,0 +1,16 @@
+{
+  "name": "vima-studio-api",
+  "version": "1.0.0",
+  "description": "Vercel serverless functions for VIMA Studio",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "sharp": "^0.33.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
