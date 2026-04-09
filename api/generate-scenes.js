@@ -83,14 +83,61 @@ function sleep(ms) {
   return new Promise(function(resolve) { setTimeout(resolve, ms); });
 }
 
-// Freepik Mystic API - async task-based generation
-async function generateWithFreepik(sceneData, imageBase64) {
-  var apiKey = process.env.FREEPIK_API_KEY;
-  if (!apiKey) throw new Error('No Freepik API key');
+async function downloadImageAsBase64(url) {
+  var response = await fetch(url);
+  if (!response.ok) throw new Error('Failed to download image: ' + response.status);
+  var arrayBuffer = await response.arrayBuffer();
+  var base64 = Buffer.from(arrayBuffer).toString('base64');
+  var contentType = response.headers.get('content-type') || 'image/png';
+  return 'data:' + contentType + ';base64,' + base64;
+}
 
-  console.log('[Scenes] Freepik: Creating task for ' + sceneData.key);
+// Poll any Freepik async task at its correct endpoint
+async function pollFreepikTask(taskId, pollBaseUrl, sceneKey, apiKey) {
+  var maxPolls = 25;
+  var pollInterval = 2000;
 
-  // Step 1: Create the generation task using Reimagine Flux
+  for (var i = 0; i < maxPolls; i++) {
+    await sleep(pollInterval);
+
+    var statusResponse = await fetch(pollBaseUrl + '/' + taskId, {
+      method: 'GET',
+      headers: { 'x-freepik-api-key': apiKey }
+    });
+
+    if (!statusResponse.ok) {
+      console.log('[Scenes] Poll error for ' + sceneKey + ': ' + statusResponse.status);
+      continue;
+    }
+
+    var statusData = await statusResponse.json();
+    var status = statusData.data && statusData.data.status;
+
+    if (status === 'COMPLETED') {
+      var images = statusData.data.generated;
+      if (images && images.length > 0) {
+        console.log('[Scenes] COMPLETED ' + sceneKey + ' after ' + ((i + 1) * 2) + 's');
+        return await downloadImageAsBase64(images[0]);
+      }
+      throw new Error('Completed but no images for ' + sceneKey);
+    }
+
+    if (status === 'FAILED') {
+      throw new Error('Task FAILED for ' + sceneKey);
+    }
+
+    if (i % 5 === 4) {
+      console.log('[Scenes] Still processing ' + sceneKey + ' (' + status + ') after ' + ((i + 1) * 2) + 's');
+    }
+  }
+
+  throw new Error('Timeout polling ' + sceneKey);
+}
+
+// Try Reimagine Flux first (image-to-image, potentially faster)
+async function generateWithReimaginFlux(sceneData, imageBase64, apiKey) {
+  console.log('[Scenes] Reimagine Flux: ' + sceneData.key);
+
   var createResponse = await fetch('https://api.freepik.com/v1/ai/beta/text-to-image/reimagine-flux', {
     method: 'POST',
     headers: {
@@ -107,104 +154,83 @@ async function generateWithFreepik(sceneData, imageBase64) {
 
   if (!createResponse.ok) {
     var errBody = await createResponse.text();
-    console.log('[Scenes] Freepik Reimagine create failed: ' + createResponse.status + ' - ' + errBody.substring(0, 300));
-
-    // Fallback to Mystic with structure_reference
-    console.log('[Scenes] Trying Freepik Mystic for ' + sceneData.key);
-    createResponse = await fetch('https://api.freepik.com/v1/ai/mystic', {
-      method: 'POST',
-      headers: {
-        'x-freepik-api-key': apiKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        prompt: sceneData.prompt,
-        resolution: "2k",
-        aspect_ratio: "square_1_1",
-        model: "realism",
-        structure_reference: imageBase64,
-        structure_strength: 70,
-        hdr: 50,
-        creative_detailing: 50,
-        filter_nsfw: true
-      })
-    });
-
-    if (!createResponse.ok) {
-      var errBody2 = await createResponse.text();
-      console.log('[Scenes] Freepik Mystic create failed: ' + createResponse.status + ' - ' + errBody2.substring(0, 300));
-      throw new Error('Freepik API failed: ' + createResponse.status);
-    }
+    console.log('[Scenes] Reimagine Flux failed for ' + sceneData.key + ': ' + createResponse.status + ' - ' + errBody.substring(0, 300));
+    throw new Error('Reimagine Flux ' + createResponse.status);
   }
 
   var taskData = await createResponse.json();
-  console.log('[Scenes] Freepik task created for ' + sceneData.key + ': ' + JSON.stringify(taskData).substring(0, 200));
+  console.log('[Scenes] Reimagine Flux response for ' + sceneData.key + ': ' + JSON.stringify(taskData).substring(0, 200));
 
-  // Check if response already contains the image (some endpoints are sync)
+  // Check for immediate result
   if (taskData.data && taskData.data.generated && taskData.data.generated.length > 0) {
-    var imageUrl = taskData.data.generated[0];
-    console.log('[Scenes] Freepik immediate result for ' + sceneData.key);
-    return await downloadImageAsBase64(imageUrl);
+    console.log('[Scenes] Reimagine Flux immediate result for ' + sceneData.key);
+    return await downloadImageAsBase64(taskData.data.generated[0]);
   }
 
-  // Step 2: Poll for task completion
+  // Need to poll - use the correct reimagine-flux endpoint
   var taskId = taskData.data && taskData.data.task_id;
   if (!taskId) {
-    // Try alternative response formats
     taskId = taskData.task_id || (taskData.data && taskData.data.id);
-    if (!taskId) throw new Error('No task ID in Freepik response');
+    if (!taskId) throw new Error('No task ID from Reimagine Flux');
   }
 
-  var maxPolls = 25; // ~50 seconds max
-  var pollInterval = 2000;
-
-  for (var i = 0; i < maxPolls; i++) {
-    await sleep(pollInterval);
-
-    var statusResponse = await fetch('https://api.freepik.com/v1/ai/mystic/' + taskId, {
-      method: 'GET',
-      headers: {
-        'x-freepik-api-key': apiKey
-      }
-    });
-
-    if (!statusResponse.ok) {
-      console.log('[Scenes] Freepik poll error for ' + sceneData.key + ': ' + statusResponse.status);
-      continue;
-    }
-
-    var statusData = await statusResponse.json();
-    var status = statusData.data && statusData.data.status;
-
-    if (status === 'COMPLETED') {
-      var images = statusData.data.generated;
-      if (images && images.length > 0) {
-        console.log('[Scenes] Freepik COMPLETED for ' + sceneData.key + ' after ' + ((i + 1) * 2) + 's');
-        return await downloadImageAsBase64(images[0]);
-      }
-      throw new Error('Freepik completed but no images');
-    }
-
-    if (status === 'FAILED') {
-      throw new Error('Freepik task failed for ' + sceneData.key);
-    }
-
-    // Still IN_PROGRESS or CREATED, continue polling
-    if (i % 5 === 4) {
-      console.log('[Scenes] Freepik still processing ' + sceneData.key + ' (' + status + ') after ' + ((i + 1) * 2) + 's');
-    }
-  }
-
-  throw new Error('Freepik timeout for ' + sceneData.key);
+  return await pollFreepikTask(
+    taskId,
+    'https://api.freepik.com/v1/ai/beta/text-to-image/reimagine-flux',
+    sceneData.key,
+    apiKey
+  );
 }
 
-async function downloadImageAsBase64(url) {
-  var response = await fetch(url);
-  if (!response.ok) throw new Error('Failed to download image: ' + response.status);
-  var arrayBuffer = await response.arrayBuffer();
-  var base64 = Buffer.from(arrayBuffer).toString('base64');
-  var contentType = response.headers.get('content-type') || 'image/png';
-  return 'data:' + contentType + ';base64,' + base64;
+// Fallback: Mystic (text-to-image with structure reference)
+async function generateWithMystic(sceneData, imageBase64, apiKey) {
+  console.log('[Scenes] Mystic: ' + sceneData.key);
+
+  var createResponse = await fetch('https://api.freepik.com/v1/ai/mystic', {
+    method: 'POST',
+    headers: {
+      'x-freepik-api-key': apiKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      prompt: sceneData.prompt,
+      resolution: "2k",
+      aspect_ratio: "square_1_1",
+      model: "realism",
+      structure_reference: imageBase64,
+      structure_strength: 70,
+      hdr: 50,
+      creative_detailing: 50,
+      filter_nsfw: true
+    })
+  });
+
+  if (!createResponse.ok) {
+    var errBody = await createResponse.text();
+    console.log('[Scenes] Mystic failed for ' + sceneData.key + ': ' + createResponse.status + ' - ' + errBody.substring(0, 300));
+    throw new Error('Mystic ' + createResponse.status);
+  }
+
+  var taskData = await createResponse.json();
+  console.log('[Scenes] Mystic task for ' + sceneData.key + ': ' + JSON.stringify(taskData).substring(0, 200));
+
+  // Check for immediate result
+  if (taskData.data && taskData.data.generated && taskData.data.generated.length > 0) {
+    return await downloadImageAsBase64(taskData.data.generated[0]);
+  }
+
+  var taskId = taskData.data && taskData.data.task_id;
+  if (!taskId) {
+    taskId = taskData.task_id || (taskData.data && taskData.data.id);
+    if (!taskId) throw new Error('No task ID from Mystic');
+  }
+
+  return await pollFreepikTask(
+    taskId,
+    'https://api.freepik.com/v1/ai/mystic',
+    sceneData.key,
+    apiKey
+  );
 }
 
 // Photoroom API - synchronous
@@ -218,13 +244,11 @@ async function generateWithPhotoroom(sceneData, imageBuffer) {
   formData.append('background.prompt', sceneData.photoroom_prompt || sceneData.prompt);
   formData.append('referenceBox', 'originalImage');
 
-  console.log('[Scenes] Photoroom: Calling for ' + sceneData.key);
+  console.log('[Scenes] Photoroom: ' + sceneData.key);
 
   var response = await fetch('https://image-api.photoroom.com/v2/edit', {
     method: 'POST',
-    headers: {
-      'x-api-key': apiKey
-    },
+    headers: { 'x-api-key': apiKey },
     body: formData
   });
 
@@ -238,41 +262,43 @@ async function generateWithPhotoroom(sceneData, imageBuffer) {
   var base64 = Buffer.from(arrayBuffer).toString('base64');
   var contentType = response.headers.get('content-type') || 'image/png';
   console.log('[Scenes] Photoroom SUCCESS for ' + sceneData.key + ' (' + Math.round(arrayBuffer.byteLength / 1024) + 'KB)');
-
   return 'data:' + contentType + ';base64,' + base64;
 }
 
 async function generateScene(sceneData, imageBuffer, imageBase64) {
+  var apiKey = process.env.FREEPIK_API_KEY;
+
+  // Strategy: Try Reimagine Flux → Mystic → Photoroom → SVG fallback
+  if (apiKey) {
+    // Try Reimagine Flux first (image-to-image, potentially faster)
+    try {
+      var image = await generateWithReimaginFlux(sceneData, imageBase64, apiKey);
+      return { name: sceneData.name, key: sceneData.key, image: image, provider: 'freepik' };
+    } catch (reimagineErr) {
+      console.log('[Scenes] Reimagine failed for ' + sceneData.key + ': ' + reimagineErr.message);
+    }
+
+    // Try Mystic (text-to-image with structure ref)
+    try {
+      var image2 = await generateWithMystic(sceneData, imageBase64, apiKey);
+      return { name: sceneData.name, key: sceneData.key, image: image2, provider: 'freepik' };
+    } catch (mysticErr) {
+      console.log('[Scenes] Mystic failed for ' + sceneData.key + ': ' + mysticErr.message);
+    }
+  }
+
+  // Photoroom fallback
   try {
-    // Try Freepik first (Photoroom is out of credits)
-    var image = await generateWithFreepik(sceneData, imageBase64);
+    var image3 = await generateWithPhotoroom(sceneData, imageBuffer);
+    return { name: sceneData.name, key: sceneData.key, image: image3, provider: 'photoroom' };
+  } catch (photoroomErr) {
+    console.log('[Scenes] Photoroom failed for ' + sceneData.key + ': ' + photoroomErr.message);
     return {
       name: sceneData.name,
       key: sceneData.key,
-      image: image,
-      provider: 'freepik'
+      image: createSvgFallback(sceneData.key, sceneData.name),
+      provider: 'fallback'
     };
-  } catch (freepikErr) {
-    console.log('[Scenes] Freepik failed for ' + sceneData.key + ': ' + freepikErr.message);
-
-    // Fallback to Photoroom
-    try {
-      var image2 = await generateWithPhotoroom(sceneData, imageBuffer);
-      return {
-        name: sceneData.name,
-        key: sceneData.key,
-        image: image2,
-        provider: 'photoroom'
-      };
-    } catch (photoroomErr) {
-      console.log('[Scenes] Photoroom also failed for ' + sceneData.key + ': ' + photoroomErr.message);
-      return {
-        name: sceneData.name,
-        key: sceneData.key,
-        image: createSvgFallback(sceneData.key, sceneData.name),
-        provider: 'fallback'
-      };
-    }
   }
 }
 
