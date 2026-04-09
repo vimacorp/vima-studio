@@ -209,7 +209,10 @@ TYPE html>
             background-color: var(--dark);
             color: var(--gray-100);
             line-height: 1.6;
-            overflow-x: hidden;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
         }
 
         /* Typography */
@@ -344,7 +347,8 @@ TYPE html>
         /* Main Layout */
         #app {
             display: flex;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .sidebar {
