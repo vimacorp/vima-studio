@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIMA Studio - Gere Anúncios com IA</title>
+    <title>VIMA Studio - Gere AnÃºncios com IA</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1289,20 +1289,20 @@
                 </div>
                 <div class="nav-item" data-page="new-listing">
                     <span class="nav-icon">&#x2795;</span>
-                    <span>Novo Anúncio</span>
+                    <span>Novo AnÃºncio</span>
                 </div>
                 <div class="nav-item" data-page="my-listings">
                     <span class="nav-icon">&#x1F4CB;</span>
-                    <span>Meus Anúncios</span>
+                    <span>Meus AnÃºncios</span>
                 </div>
                 <div class="nav-item" data-page="settings">
                     <span class="nav-icon">&#x2699;&#xFE0F;</span>
-                    <span>Configurações</span>
+                    <span>ConfiguraÃ§Ãµes</span>
                 </div>
             </div>
             <div class="sidebar-user">
                 <div class="user-info">
-                    <div class="user-name" id="sidebarUserName">Usuário</div>
+                    <div class="user-name" id="sidebarUserName">UsuÃ¡rio</div>
                     <div class="user-email" id="sidebarUserEmail">email@example.com</div>
                 </div>
                 <button class="btn btn-secondary btn-small btn-block" onclick="app.logout()">
@@ -1320,7 +1320,7 @@
                         VIMA <span>STUDIO</span>
                     </div>
                     <h2 class="auth-title">Bem-vindo de volta</h2>
-                    <p class="auth-subtitle">Faça login para acessar sua conta</p>
+                    <p class="auth-subtitle">FaÃ§a login para acessar sua conta</p>
 
                     <form id="loginForm" onsubmit="app.handleLogin(event)">
                         <div class="form-group">
@@ -1339,7 +1339,7 @@
                     </form>
 
                     <div class="auth-links">
-                        Não tem conta? <a href="#register">Criar conta</a>
+                        NÃ£o tem conta? <a href="#register">Criar conta</a>
                     </div>
                 </div>
             </div>
@@ -1356,7 +1356,7 @@
                     <form id="registerForm" onsubmit="app.handleRegister(event)">
                         <div class="form-group">
                             <label class="form-label" for="registerName">Nome completo</label>
-                            <input type="text" id="registerName" placeholder="João Silva" required>
+                            <input type="text" id="registerName" placeholder="JoÃ£o Silva" required>
                         </div>
 
                         <div class="form-group">
@@ -1367,7 +1367,7 @@
                         <div class="form-group">
                             <label class="form-label" for="registerPassword">Senha</label>
                             <input type="password" id="registerPassword" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" minlength="6" required>
-                            <div class="form-help">Mínimo de 6 caracteres</div>
+                            <div class="form-help">MÃ­nimo de 6 caracteres</div>
                         </div>
 
                         <div class="form-group">
@@ -1381,7 +1381,7 @@
                     </form>
 
                     <div class="auth-links">
-                        Já tem conta? <a href="#login">Fazer login</a>
+                        JÃ¡ tem conta? <a href="#login">Fazer login</a>
                     </div>
                 </div>
             </div>
@@ -1390,33 +1390,33 @@
             <div id="dashboard" class="page">
                 <div class="dashboard-header">
                     <div class="welcome-section">
-                        <h1 class="welcome-title">Olá, <span id="userNameDisplay">Usuário</span>! &#x1F44B;</h1>
-                        <p class="welcome-subtitle">Bem-vindo ao VIMA Studio - Seu assistente de anúncios com IA</p>
+                        <h1 class="welcome-title">OlÃ¡, <span id="userNameDisplay">UsuÃ¡rio</span>! &#x1F44B;</h1>
+                        <p class="welcome-subtitle">Bem-vindo ao VIMA Studio - Seu assistente de anÃºncios com IA</p>
                     </div>
                 </div>
 
                 <div class="stats-grid" id="statsGrid">
                     <div class="stat-card">
-                        <div class="stat-label">Anúncios Criados</div>
+                        <div class="stat-label">AnÃºncios Criados</div>
                         <div class="stat-value" id="statCreated">0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Créditos Restantes</div>
+                        <div class="stat-label">CrÃ©ditos Restantes</div>
                         <div class="stat-value" id="statCredits">50</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Anúncios Salvos</div>
+                        <div class="stat-label">AnÃºncios Salvos</div>
                         <div class="stat-value" id="statSaved">0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Taxa de Conversão</div>
+                        <div class="stat-label">Taxa de ConversÃ£o</div>
                         <div class="stat-value" id="statConversion">&#x2014;</div>
                     </div>
                 </div>
 
                 <div class="action-buttons">
                     <button class="btn btn-primary btn-large" onclick="app.navigateTo('new-listing')">
-                        &#x2728; Criar Novo Anúncio
+                        &#x2728; Criar Novo AnÃºncio
                     </button>
                 </div>
             </div>
@@ -1425,8 +1425,8 @@
             <div id="new-listing" class="page">
                 <div class="listing-container">
                     <div class="listing-header">
-                        <h1>Criar Novo Anúncio</h1>
-                        <p>Carregue uma foto do seu produto e deixe a IA gerar um anúncio otimizado</p>
+                        <h1>Criar Novo AnÃºncio</h1>
+                        <p>Carregue uma foto do seu produto e deixe a IA gerar um anÃºncio otimizado</p>
                     </div>
 
                     <div class="listing-form">
@@ -1436,7 +1436,7 @@
                             <div class="upload-area" id="uploadArea" ondrop="app.handleDrop(event)" ondragover="app.handleDragOver(event)" ondragleave="app.handleDragLeave(event)" onclick="document.getElementById('photoInput').click()">
                                 <div class="upload-icon">&#x1F4F8;</div>
                                 <div class="upload-text">Arraste sua foto aqui ou clique para selecionar</div>
-                                <div class="upload-hint">Formatos suportados: JPG, PNG, WebP (máx. 25MB)</div>
+                                <div class="upload-hint">Formatos suportados: JPG, PNG, WebP (mÃ¡x. 25MB)</div>
                             </div>
                             <input type="file" id="photoInput" accept="image/*" onchange="app.handlePhotoUpload(event)">
                             <img id="photoPreview" class="image-preview" alt="Preview da foto">
@@ -1464,29 +1464,29 @@
 
                         <!-- Generate Button -->
                         <button type="button" class="btn btn-primary btn-block" id="generateBtn" onclick="app.generateListing()" disabled>
-                            &#x1F916; Gerar Anúncio com IA
+                            &#x1F916; Gerar AnÃºncio com IA
                         </button>
                     </div>
 
                     <!-- Results Section -->
                     <div class="results-section" id="resultsSection">
-                        <h2 style="margin-bottom: 2rem;">Seu Anúncio Gerado</h2>
+                        <h2 style="margin-bottom: 2rem;">Seu AnÃºncio Gerado</h2>
 
                         <div class="result-field">
-                            <div class="result-label">Título</div>
+                            <div class="result-label">TÃ­tulo</div>
                             <div class="result-value" id="resultTitle">&#x2014;</div>
                             <div class="result-buttons">
-                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultTitle', 'Título')">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultTitle', 'TÃ­tulo')">
                                     &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <div class="result-field">
-                            <div class="result-label">Descrição</div>
+                            <div class="result-label">DescriÃ§Ã£o</div>
                             <div class="result-value" id="resultDescription" style="min-height: 150px; align-items: flex-start; white-space: pre-wrap;">&#x2014;</div>
                             <div class="result-buttons">
-                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultDescription', 'Descrição')">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultDescription', 'DescriÃ§Ã£o')">
                                     &#x1F4CB; Copiar
                                 </button>
                             </div>
@@ -1513,17 +1513,17 @@
                         </div>
 
                         <div class="result-field">
-                            <div class="result-label">Faixa de Preço Sugerida</div>
+                            <div class="result-label">Faixa de PreÃ§o Sugerida</div>
                             <div class="result-value" id="resultPrice">&#x2014;</div>
                             <div class="result-buttons">
-                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultPrice', 'Faixa de Preço')">
+                                <button class="btn btn-secondary btn-small copy-btn" onclick="app.copyToClipboard('resultPrice', 'Faixa de PreÃ§o')">
                                     &#x1F4CB; Copiar
                                 </button>
                             </div>
                         </div>
 
                         <button class="btn btn-primary btn-block" onclick="app.saveListing()" style="margin-top: 2rem;">
-                            &#x1F4BE; Salvar Anúncio
+                            &#x1F4BE; Salvar AnÃºncio
                         </button>
                     </div>
 
@@ -1610,16 +1610,16 @@
             <div id="my-listings" class="page">
                 <div class="listing-container">
                     <div class="listing-header">
-                        <h1>Meus Anúncios</h1>
-                        <p>Visualize e gerencie todos os seus anúncios salvos</p>
+                        <h1>Meus AnÃºncios</h1>
+                        <p>Visualize e gerencie todos os seus anÃºncios salvos</p>
                     </div>
 
                     <div id="listingsEmpty" class="empty-state">
                         <div class="empty-icon">&#x1F4CB;</div>
-                        <h3 class="empty-title">Nenhum anúncio salvo ainda</h3>
-                        <p class="empty-text">Crie seu primeiro anúncio com a IA para começar</p>
+                        <h3 class="empty-title">Nenhum anÃºncio salvo ainda</h3>
+                        <p class="empty-text">Crie seu primeiro anÃºncio com a IA para comeÃ§ar</p>
                         <button class="btn btn-primary" onclick="app.navigateTo('new-listing')">
-                            Criar Anúncio
+                            Criar AnÃºncio
                         </button>
                     </div>
 
@@ -1631,12 +1631,12 @@
             <div id="settings" class="page">
                 <div class="listing-container">
                     <div class="listing-header">
-                        <h1>Configurações</h1>
-                        <p>Gerencie suas preferências e dados de conta</p>
+                        <h1>ConfiguraÃ§Ãµes</h1>
+                        <p>Gerencie suas preferÃªncias e dados de conta</p>
                     </div>
 
                     <div class="settings-section">
-                        <h3 class="settings-title">Informações da Conta</h3>
+                        <h3 class="settings-title">InformaÃ§Ãµes da Conta</h3>
                         <div class="form-group">
                             <label class="form-label">Nome</label>
                             <input type="text" id="settingsName" disabled>
@@ -1648,20 +1648,20 @@
                     </div>
 
                     <div class="settings-section">
-                        <h3 class="settings-title">Preferências</h3>
+                        <h3 class="settings-title">PreferÃªncias</h3>
                         <div class="form-group">
                             <label class="form-label" for="settingsLanguage">Idioma</label>
                             <select id="settingsLanguage">
-                                <option value="pt-BR" selected>Português (Brasil)</option>
+                                <option value="pt-BR" selected>PortuguÃªs (Brasil)</option>
                                 <option value="en">English</option>
-                                <option value="es">EspaÀ±ol</option>
+                                <option value="es">EspaÃÂ±ol</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="settings-section danger-zone">
                         <h3 class="settings-title danger-title">Zona de Perigo</h3>
-                        <p>Essas ações não podem ser desfeitas.</p>
+                        <p>Essas aÃ§Ãµes nÃ£o podem ser desfeitas.</p>
                         <button class="btn btn-secondary" onclick="app.handleDeleteAccount()" style="border-color: var(--error); color: var(--error);">
                             &#x1F5D1;&#xFE0F; Deletar Conta Permanentemente
                         </button>
@@ -1760,7 +1760,7 @@
 
             updateUserUI() {
                 if (this.currentUser) {
-                    const name = this.currentUser.user_metadata?.name || 'Usuário';
+                    const name = this.currentUser.user_metadata?.name || 'UsuÃ¡rio';
                     document.getElementById('userNameDisplay').textContent = name;
                     document.getElementById('sidebarUserName').textContent = name;
                     document.getElementById('sidebarUserEmail').textContent = this.currentUser.email;
@@ -1893,12 +1893,12 @@
                 }
 
                 if (password !== passwordConfirm) {
-                    this.showToast('As senhas não correspondem', 'error');
+                    this.showToast('As senhas nÃ£o correspondem', 'error');
                     return;
                 }
 
                 if (password.length < 6) {
-                    this.showToast('A senha deve ter no mínimo 6 caracteres', 'error');
+                    this.showToast('A senha deve ter no mÃ­nimo 6 caracteres', 'error');
                     return;
                 }
 
@@ -1921,7 +1921,7 @@
                         throw error;
                     }
 
-                    this.showToast('Conta criada com sucesso! Faça login para continuar.', 'success');
+                    this.showToast('Conta criada com sucesso! FaÃ§a login para continuar.', 'success');
                     setTimeout(() => {
                         window.location.hash = '#login';
                     }, 500);
@@ -1990,7 +1990,7 @@
                     if (file.type.startsWith('image/')) {
                         this.processPhoto(file);
                     } else {
-                        this.showToast('Por favor, carregue uma imagem válida', 'error');
+                        this.showToast('Por favor, carregue uma imagem vÃ¡lida', 'error');
                     }
                 }
             }
@@ -2006,7 +2006,7 @@
                 // Validate file size (25MB max)
                 const maxSize = 25 * 1024 * 1024;
                 if (file.size > maxSize) {
-                    this.showToast('Imagem muito grande. Máximo 25MB.', 'error');
+                    this.showToast('Imagem muito grande. MÃ¡ximo 25MB.', 'error');
                     return;
                 }
 
@@ -2253,76 +2253,153 @@
 
             displayVideoPreview(video) {
                 var section = document.getElementById("videoSection");
-                var content = document.getElementById("videoContent");
-                var scenes = video.scenes || [];
-                var h = '<div class="video-preview">';
-                h += '<canvas id="videoCanvas" class="video-canvas" width="1080" height="1920"></canvas>';
-                h += '<div class="video-controls">';
-                h += '<button onclick="app.playVideo()">&#x25B6; Reproduzir</button>';
-                h += '<button onclick="app.downloadVideo()">&#x2B07; Baixar Video</button>';
-                h += '</div></div>';
-                h += '<div class="scene-timeline">';
-                for (var i = 0; i < scenes.length; i++) {
-                    var s = scenes[i];
-                    h += '<div class="scene-card">';
-                    h += '<h5>Cena ' + s.id + " (" + s.duration + "s)" + '</h5>';
-                    h += '<p>' + (s.text || "") + '</p>';
-                    h += '</div>';
+                if (section) section.style.display = "block";
+                var container = document.getElementById("videoContent");
+                if (!container) return;
+                var scenesHtml = "";
+                var self = this;
+                video.scenes.forEach(function(scene, i) {
+                    scenesHtml += '<div class="scene-card" style="padding:8px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="app.drawScene(app.currentListing.videoData.scenes[' + i + '])">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                        '<span style="color:#a78bfa;font-weight:600;font-size:13px;">Cena ' + (i + 1) + ' - ' + (scene.category || '') + '</span>' +
+                        '<span style="color:#888;font-size:12px;">' + (scene.duration || 5) + 's</span>' +
+                        '</div>' +
+                        '<div style="color:#fff;font-size:14px;margin-top:4px;">' + (scene.text || '') + '</div>' +
+                        '<div style="color:#999;font-size:12px;margin-top:2px;">' + (scene.subtext || '') + '</div>' +
+                        '</div>';
+                });
+                container.innerHTML = '<div style="display:flex;gap:20px;flex-wrap:wrap;">' +
+                    '<div style="flex:1;min-width:280px;">' +
+                    '<canvas id="videoCanvas" width="1080" height="1920" style="width:100%;max-width:360px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);"></canvas>' +
+                    '<div style="display:flex;gap:10px;margin-top:12px;justify-content:center;">' +
+                    '<button onclick="app.playVideo()" class="btn-primary" style="padding:10px 24px;border-radius:8px;font-size:14px;">&#9654; Reproduzir Video</button>' +
+                    '<button onclick="app.downloadVideo()" class="btn-secondary" style="padding:10px 24px;border-radius:8px;font-size:14px;">&#11015; Download MP4</button>' +
+                    '</div></div>' +
+                    '<div style="flex:1;min-width:250px;">' +
+                    '<h4 style="color:#a78bfa;margin-bottom:10px;">Roteiro do Video (' + video.totalDuration + 's)</h4>' +
+                    '<div style="max-height:400px;overflow-y:auto;">' + scenesHtml + '</div>' +
+                    (video.narration ? '<details style="margin-top:12px;"><summary style="color:#a78bfa;cursor:pointer;font-size:13px;">Texto de Narracao</summary><p style="color:#ccc;font-size:13px;margin-top:8px;line-height:1.5;">' + video.narration + '</p></details>' : '') +
+                    '</div></div>';
+                if (video.scenes && video.scenes.length > 0) {
+                    this.drawScene(video.scenes[0]);
                 }
-                h += '</div>';
-                if (video.narrationFull) {
-                    h += '<div class="narration-box">';
-                    h += '<h4>Roteiro de Narracao</h4>';
-                    h += '<p>' + video.narrationFull + '</p>';
-                    h += '<button class="btn-download" style="margin-top:1rem;max-width:200px;" onclick="app.copyText(this.previousElementSibling.textContent)">Copiar Roteiro</button>';
-                    h += '</div>';
-                }
-                content.innerHTML = h;
-                section.classList.add("active");
-                this.drawScene(scenes[0]);
-                section.scrollIntoView({ behavior: "smooth", block: "start" });
             }
 
+
             drawScene(scene) {
-                if (!scene) return;
                 var canvas = document.getElementById("videoCanvas");
                 if (!canvas) return;
                 var ctx = canvas.getContext("2d");
-                var w = canvas.width, h = canvas.height;
-                var bg = scene.bgGradient || ["#1a1a2e", "#16213e"];
-                var grad = ctx.createLinearGradient(0, 0, 0, h);
-                grad.addColorStop(0, bg[0]);
-                grad.addColorStop(1, bg[1]);
+                var W = canvas.width;
+                var H = canvas.height;
+                var bgColor = scene.bgColor || "linear-gradient(135deg, #1a1a2e, #16213e)";
+                var colors = bgColor.match(/#[0-9a-fA-F]{6}/g) || ["#1a1a2e", "#16213e"];
+                var grad = ctx.createLinearGradient(0, 0, W, H);
+                grad.addColorStop(0, colors[0] || "#1a1a2e");
+                grad.addColorStop(1, colors[1] || "#16213e");
                 ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, w, h);
-                ctx.fillStyle = scene.textColor || "#FFFFFF";
-                ctx.font = "bold 72px system-ui, -apple-system, sans-serif";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                var words = (scene.text || "").split(" ");
-                var lines = [], cur = "";
-                for (var i = 0; i < words.length; i++) {
-                    var test = cur + (cur ? " " : "") + words[i];
-                    if (ctx.measureText(test).width > w * 0.8) { lines.push(cur); cur = words[i]; } else { cur = test; }
+                ctx.fillRect(0, 0, W, H);
+                var textColor = scene.textColor || "#ffffff";
+                var layout = scene.layout || "product-center";
+                var productImg = this.currentListing && this.currentListing.imageBase64 ? this.currentListing.imageBase64 : null;
+                if (productImg) {
+                    var img = new Image();
+                    var self = this;
+                    img.onload = function() {
+                        var iw = img.width;
+                        var ih = img.height;
+                        var scale, dx, dy, dw, dh;
+                        var textX, textY, textMaxW, textAlign;
+                        if (layout === "product-center") {
+                            scale = Math.min((W * 0.7) / iw, (H * 0.5) / ih);
+                            dw = iw * scale; dh = ih * scale;
+                            dx = (W - dw) / 2; dy = H * 0.12;
+                            textX = W / 2; textY = dy + dh + 60; textMaxW = W * 0.85; textAlign = "center";
+                        } else if (layout === "product-left-text-right") {
+                            scale = Math.min((W * 0.45) / iw, (H * 0.55) / ih);
+                            dw = iw * scale; dh = ih * scale;
+                            dx = W * 0.03; dy = (H - dh) / 2;
+                            textX = W * 0.55 + (W * 0.42) / 2; textY = H * 0.3; textMaxW = W * 0.4; textAlign = "center";
+                        } else if (layout === "product-right-text-left") {
+                            scale = Math.min((W * 0.45) / iw, (H * 0.55) / ih);
+                            dw = iw * scale; dh = ih * scale;
+                            dx = W * 0.52; dy = (H - dh) / 2;
+                            textX = W * 0.25; textY = H * 0.3; textMaxW = W * 0.4; textAlign = "center";
+                        } else if (layout === "zoom-product") {
+                            scale = Math.min((W * 0.85) / iw, (H * 0.6) / ih);
+                            dw = iw * scale; dh = ih * scale;
+                            dx = (W - dw) / 2; dy = H * 0.05;
+                            textX = W / 2; textY = dy + dh + 50; textMaxW = W * 0.9; textAlign = "center";
+                        } else if (layout === "split-before-after") {
+                            scale = Math.min((W * 0.45) / iw, (H * 0.45) / ih);
+                            dw = iw * scale; dh = ih * scale;
+                            dx = (W - dw) / 2; dy = H * 0.08;
+                            textX = W / 2; textY = dy + dh + 50; textMaxW = W * 0.85; textAlign = "center";
+                        } else {
+                            scale = Math.min((W * 0.6) / iw, (H * 0.45) / ih);
+                            dw = iw * scale; dh = ih * scale;
+                            dx = (W - dw) / 2; dy = H * 0.15;
+                            textX = W / 2; textY = dy + dh + 60; textMaxW = W * 0.85; textAlign = "center";
+                        }
+                        ctx.shadowColor = "rgba(0,0,0,0.4)";
+                        ctx.shadowBlur = 40;
+                        ctx.shadowOffsetX = 0;
+                        ctx.shadowOffsetY = 15;
+                        ctx.drawImage(img, dx, dy, dw, dh);
+                        ctx.shadowColor = "transparent";
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = textColor;
+                        ctx.textAlign = textAlign;
+                        ctx.font = "bold 64px Arial, sans-serif";
+                        ctx.fillText(scene.text || "", textX, textY, textMaxW);
+                        ctx.font = "36px Arial, sans-serif";
+                        ctx.fillStyle = textColor + "cc";
+                        ctx.fillText(scene.subtext || "", textX, textY + 60, textMaxW);
+                        if (scene.category) {
+                            ctx.font = "bold 28px Arial, sans-serif";
+                            ctx.fillStyle = "#a78bfa";
+                            ctx.textAlign = "left";
+                            ctx.fillText(scene.category.toUpperCase(), 40, H - 50);
+                        }
+                    };
+                    img.src = productImg;
+                } else {
+                    ctx.fillStyle = textColor;
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.font = "bold 72px Arial, sans-serif";
+                    ctx.fillText(scene.text || "", W / 2, H * 0.4, W * 0.85);
+                    ctx.font = "38px Arial, sans-serif";
+                    ctx.fillStyle = textColor + "cc";
+                    ctx.fillText(scene.subtext || "", W / 2, H * 0.4 + 80, W * 0.85);
+                    if (scene.category) {
+                        ctx.font = "bold 28px Arial, sans-serif";
+                        ctx.fillStyle = "#a78bfa";
+                        ctx.textAlign = "left";
+                        ctx.fillText(scene.category.toUpperCase(), 40, H - 50);
+                    }
                 }
-                lines.push(cur);
-                var lh = 90, sy = h / 2 - ((lines.length - 1) * lh) / 2;
-                for (var i = 0; i < lines.length; i++) ctx.fillText(lines[i], w / 2, sy + i * lh);
-                ctx.fillStyle = "rgba(255,255,255,0.3)";
-                ctx.font = "36px system-ui";
-                ctx.textAlign = "left";
-                ctx.fillText("Cena " + scene.id, 40, 60);
             }
 
-            async playVideo() {
-                var video = this.currentListing.video;
+
+            playVideo() {
+                var video = this.currentListing && this.currentListing.videoData;
                 if (!video || !video.scenes) return;
                 var scenes = video.scenes;
-                for (var i = 0; i < scenes.length; i++) {
-                    this.drawScene(scenes[i]);
-                    await new Promise(function(r) { setTimeout(r, scenes[i].duration * 1000); });
+                var self = this;
+                var idx = 0;
+                function playNext() {
+                    if (idx >= scenes.length) { idx = 0; }
+                    self.drawScene(scenes[idx]);
+                    var dur = (scenes[idx].duration || 5) * 1000;
+                    idx++;
+                    if (idx <= scenes.length) {
+                        setTimeout(playNext, dur);
+                    }
                 }
+                playNext();
             }
+
 
             async downloadVideo() {
                 var self = this;
@@ -2510,7 +2587,7 @@
                 const text = element.textContent;
 
                 navigator.clipboard.writeText(text).then(() => {
-                    this.showToast(`${fieldName} copiado para a área de transferência!`, 'success');
+                    this.showToast(`${fieldName} copiado para a Ã¡rea de transferÃªncia!`, 'success');
                 }).catch(() => {
                     // Fallback
                     const textarea = document.createElement('textarea');
@@ -2519,13 +2596,13 @@
                     textarea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textarea);
-                    this.showToast(`${fieldName} copiado para a área de transferência!`, 'success');
+                    this.showToast(`${fieldName} copiado para a Ã¡rea de transferÃªncia!`, 'success');
                 });
             }
 
             async saveListing() {
                 if (!this.currentListing.result) {
-                    this.showToast('Nenhum anúncio gerado para salvar', 'error');
+                    this.showToast('Nenhum anÃºncio gerado para salvar', 'error');
                     return;
                 }
 
@@ -2546,7 +2623,7 @@
                 saved.push(listing);
                 localStorage.setItem('vima_listings', JSON.stringify(saved));
 
-                this.showToast('Anúncio salvo com sucesso!', 'success');
+                this.showToast('AnÃºncio salvo com sucesso!', 'success');
 
                 // Reset form
                 setTimeout(() => {
@@ -2629,7 +2706,7 @@
             }
 
             deleteListing(index) {
-                if (!confirm('Tem certeza que deseja deletar este anúncio?')) {
+                if (!confirm('Tem certeza que deseja deletar este anÃºncio?')) {
                     return;
                 }
 
@@ -2637,7 +2714,7 @@
                 listings.splice(listings.length - 1 - index, 1);
                 localStorage.setItem('vima_listings', JSON.stringify(listings));
 
-                this.showToast('Anúncio deletado com sucesso', 'success');
+                this.showToast('AnÃºncio deletado com sucesso', 'success');
                 this.loadMyListings();
             }
 
@@ -2646,7 +2723,7 @@
             // ================================================================
 
             async handleDeleteAccount() {
-                const confirmed = confirm('Tem certeza? Esta ação não pode ser desfeita. Todos os seus dados serão deletados permanentemente.');
+                const confirmed = confirm('Tem certeza? Esta aÃ§Ã£o nÃ£o pode ser desfeita. Todos os seus dados serÃ£o deletados permanentemente.');
 
                 if (!confirmed) {
                     return;
@@ -2729,7 +2806,7 @@
                 toast.innerHTML = `
                     <div class="toast-icon">${icons[type] || icons.info}</div>
                     <div class="toast-message">${message}</div>
-                    <button class="toast-close" onclick="this.parentElement.remove()">À</button>
+                    <button class="toast-close" onclick="this.parentElement.remove()">ÃÂ</button>
                 `;
 
                 container.appendChild(toast);
@@ -2766,33 +2843,28 @@
             }
         }
 
-        displayScenes(scenes) {
-            this.currentScenes = scenes;
-            const grid = document.getElementById('scenesGrid');
-            grid.innerHTML = '';
-            scenes.forEach((scene, i) => {
-                const card = document.createElement('div');
-                card.style.cssText = 'background:var(--gray-800,#1a1a2e);border-radius:12px;overflow:hidden;border:1px solid var(--gray-700,#2d2d44);';
-                const img = document.createElement('img');
-                img.src = scene.image;
-                img.alt = scene.name;
-                img.style.cssText = 'width:100%;aspect-ratio:1;object-fit:cover;';
-                const info = document.createElement('div');
-                info.style.cssText = 'padding:1rem;display:flex;justify-content:space-between;align-items:center;';
-                const label = document.createElement('span');
-                label.style.cssText = 'font-weight:600;color:var(--gray-100,#e0e0e0);';
-                label.textContent = scene.name;
-                const btn = document.createElement('button');
-                btn.textContent = 'Baixar';
-                btn.style.cssText = 'background:var(--primary,#6c5ce7);color:#fff;border:none;padding:0.5rem 1rem;border-radius:8px;cursor:pointer;';
-                btn.onclick = () => this.downloadScene(i);
-                info.appendChild(label);
-                info.appendChild(btn);
-                card.appendChild(img);
-                card.appendChild(info);
-                grid.appendChild(card);
-            });
-        }
+            displayScenes(scenes) {
+                this.currentScenes = scenes;
+                var grid = document.getElementById('scenesGrid');
+                if (!grid) return;
+                var html = '';
+                scenes.forEach(function(scene, i) {
+                    var isReal = scene.provider === 'photoroom';
+                    var badge = isReal ? '<span style="position:absolute;top:8px;left:8px;background:#10b981;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">AI Photoroom</span>' : '<span style="position:absolute;top:8px;left:8px;background:#6b7280;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;">Fallback</span>';
+                    html += '<div style="position:relative;border-radius:12px;overflow:hidden;background:#1a1a2e;box-shadow:0 4px 15px rgba(0,0,0,0.3);">' +
+                        '<img src="' + scene.image + '" alt="' + (scene.name || 'Cenario') + '" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;" loading="lazy" />' +
+                        badge +
+                        '<div style="padding:10px;text-align:center;">' +
+                        '<div style="color:#fff;font-weight:600;font-size:14px;margin-bottom:6px;">' + (scene.name || 'Cenario') + '</div>' +
+                        '<button onclick="app.downloadScene(' + i + ')" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;width:100%;">Download HD</button>' +
+                        '</div></div>';
+                });
+                grid.innerHTML = html;
+                grid.style.display = 'grid';
+                grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
+                grid.style.gap = '16px';
+            }
+
 
         downloadScene(index) {
             if (!this.currentScenes || !this.currentScenes[index]) return;
