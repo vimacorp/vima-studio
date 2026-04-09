@@ -1,261 +1,287 @@
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
+const MODEL = 'claude-sonnet-4-20250514';
+
+const MARKETPLACE_PROMPTS = {
+  mercadolivre: {
+    systemPrompt: `Você é um copywriter especialista em Mercado Livre Brasil com 10+ anos de experiência. Você conhece profundamente o algoritmo de busca do ML, as práticas dos vendedores Mercado Líder Platinum, e o que converte visitantes em compradores. Você gera anúncios que parecem escritos por uma agência profissional de marketplace. SEMPRE responda em JSON válido.`,
+    userPrompt: `Analise a foto do produto e gere um anúncio COMPLETO e PROFISSIONAL para Mercado Livre.
+
+Retorne APENAS um JSON válido (sem markdown, sem texto extra) com esta estrutura exata:
+
+{
+  "titulo": "título otimizado SEO (max 60 chars, palavras-chave principais)",
+  "descricao": "descrição completa com:\n\n✅ BENEFÍCIOS (3-4 parágrafos sobre por que comprar)\n\n📋 CARACTERÍSTICAS (lista detalhada do produto)\n\n📐 ESPECIFICAÇÕES TÉCNICAS (medidas, material, peso)\n\n📦 O QUE VEM NA EMBALAGEM\n\n⚠️ OBSERVAÇÕES IMPORTANTES\n\n🏷️ GARANTIA E POLÍTICA DE TROCA",
+  "fichaTecnica": ["Material: ...", "Dimensões: ...", "Peso: ...", "Cor: ...", "Garantia: ..."],
+  "palavrasChave": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5", "keyword6", "keyword7", "keyword8"],
+  "faixaPreco": {"min": 0, "max": 0, "moeda": "BRL"},
+  "envio": {"embalagem": "tipo sugerido", "pesoEstimado": "X kg", "dimensoes": "LxAxP cm"},
+  "categoriaSugerida": "categoria do ML mais adequada"
+}`
+  },
+  amazon: {
+    systemPrompt: `Você é um especialista em Amazon Brasil com profundo conhecimento das diretrizes de listagem, A+ Content, e otimização para o algoritmo A9/A10. Você gera listagens que seguem rigorosamente o padrão Amazon e maximizam conversão. SEMPRE responda em JSON válido.`,
+    userPrompt: `Analise a foto do produto e gere uma listagem COMPLETA para Amazon Brasil.
+
+Retorne APENAS um JSON válido com esta estrutura:
+
+{
+  "titulo": "Marca + Produto + Atributo Principal + Especificação (max 200 chars, formato Amazon)",
+  "bullets": [
+    "BENEFÍCIO PRINCIPAL - Descrição clara do diferencial #1",
+    "RECURSO IMPORTANTE - Descrição do feature #2",
+    "QUALIDADE E MATERIAL - Detalhes sobre materiais e construção",
+    "VERSATILIDADE - Casos de uso e aplicações",
+    "GARANTIA E SUPORTE - Informações de garantia e pós-venda"
+  ],
+  "descricaoAPlus": {
+    "secao1_beneficios": "Parágrafo descrevendo os benefícios principais",
+    "secao2_caracteristicas": "Parágrafo sobre características técnicas",
+    "secao3_usoCotidiano": "Parágrafo sobre como usar no dia a dia"
+  },
+  "termosBackend": "termo1 termo2 termo3 termo4 termo5 (sem vírgulas)",
+  "especificacoes": {"Marca": "...", "Material": "...", "Dimensões": "...", "Peso": "...", "Cor": "...", "Garantia": "..."},
+  "categoriaSugerida": "categoria Amazon mais adequada"
+}`
+  },
+  shopee: {
+    systemPrompt: `Você é um especialista em vendas na Shopee Brasil. Conhece o público jovem e mobile-first da plataforma. Usa linguagem divertida, emojis estratégicos, e cria urgência. Suas listagens são otimizadas para scroll rápido e conversão impulsiva. SEMPRE responda em JSON válido.`,
+    userPrompt: `Analise a foto do produto e gere uma listagem IRRESISTÍVEL para Shopee Brasil.
+
+Retorne APENAS um JSON válido com esta estrutura:
+
+{
+  "titulo": "🔥 Título criativo com emojis (max 100 chars, chamaço e com keywords)",
+  "descricao": "Descrição dinâmica com:\n\n🌟 Por que você PRECISA deste produto\n\n✨ Características incríveis\n\n📏 Especificações\n\n💝 Presente perfeito para...\n\n⚡ Compre agora e aproveite!",
+  "hashtags": ["#Tag1", "#Tag2", "#Tag3", "#Tag4", "#Tag5", "#Tag6", "#Tag7", "#Tag8"],
+  "textoFlashDeal": "🔥 OFERTA RELÂMPAGO! Texto curto e urgente para promoção",
+  "especificacoes": ["Material: ...", "Tamanho: ...", "Cor: ...", "Peso: ..."],
+  "categoriaSugerida": "categoria Shopee mais adequada"
+}`
+  },
+  tiktokshop: {
+    systemPrompt: `Você é um criador de conteúdo viral no TikTok Brasil e especialista em TikTok Shop. Conhece as trends, os hooks que funcionam, e como fazer um produto viralizar. Sua linguagem é Gen Z, direta e impactante. SEMPRE responda em JSON válido.`,
+    userPrompt: `Analise a foto do produto e gere conteúdo VIRAL para TikTok Shop Brasil.
+
+Retorne APENAS um JSON válido com esta estrutura:
+
+{
+  "titulo": "🤯 Título ultra-curto e impactante (max 34 chars)",
+  "descricao": "Descrição mobile-first:\nCurta\nDireta\nCom quebras de linha\nPra ler no celular\n\nPor que comprar 👇\n• Razão 1\n• Razão 2\n• Razão 3",
+  "hooksVideo": [
+    "Hook 1: frase de abertura viral para vídeo de 15s",
+    "Hook 2: outra opção de gancho irresistível",
+    "Hook 3: gancho de curiosidade/surpresa",
+    "Hook 4: gancho de transformação/antes e depois"
+  ],
+  "roteiroVideo15s": {
+    "cena1_3s": "Gancho inicial (0-3s): O que mostrar e falar",
+    "cena2_5s": "Demonstração (3-8s): Mostrar o produto em uso",
+    "cena3_4s": "Benefício (8-12s): Resultado/impacto visual",
+    "cena4_3s": "CTA (12-15s): Chamada para ação"
+  },
+  "hashtags": ["#FYP", "#ParaVocê", "#TikTokMeFezComprar", "#Tag4", "#Tag5", "#Tag6"],
+  "especificacoes": ["Spec1", "Spec2", "Spec3"],
+  "categoriaSugerida": "categoria TikTok Shop"
+}`
+  },
+  magalu: {
+    systemPrompt: `Você é um especialista em vendas na Magalu (Magazine Luiza), o marketplace premium brasileiro. Suas listagens são profissionais, completas e transmitem confiança. Você conhece o público Magalu que valoriza qualidade e bom atendimento. SEMPRE responda em JSON válido.`,
+    userPrompt: `Analise a foto do produto e gere uma listagem PROFISSIONAL para Magalu.
+
+Retorne APENAS um JSON válido com esta estrutura:
+
+{
+  "titulo": "Título profissional e descritivo (max 150 chars, Marca + Produto + Diferencial)",
+  "descricao": "Descrição completa e estruturada:\n\n📌 SOBRE O PRODUTO\nParágrafo introdutório\n\n⭐ BENEFÍCIOS\n• Benefício 1\n• Benefício 2\n• Benefício 3\n\n🔧 CARACTERÍSTICAS\nDescrição técnica detalhada\n\n📐 ESPECIFICAÇÕES\nMedidas e detalhes técnicos\n\n✅ DIFERENCIAIS\nO que torna este produto especial",
+  "destaques": [
+    "Destaque 1 - benefício principal",
+    "Destaque 2 - qualidade/material",
+    "Destaque 3 - versatilidade",
+    "Destaque 4 - garantia/confiança",
+    "Destaque 5 - custo-benefício"
+  ],
+  "especificacoes": {"Marca": "...", "Material": "...", "Dimensões": "...", "Peso": "...", "Cor": "...", "Garantia": "...", "Voltagem": "..."},
+  "palavrasChave": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+  "categoriaSugerida": "categoria Magalu mais adequada"
+}`
+  }
+};
+
+async function callClaude(systemPrompt, userContent, maxTokens = 3000) {
+  const response = await fetch(CLAUDE_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{
+        role: 'user',
+        content: userContent
+      }]
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Claude API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+  return data.content[0].text;
+}
+
+function formatResultForDisplay(marketplace, structured) {
+  let text = '';
+
+  if (structured.titulo) {
+    text += `📌 TÍTULO\n${structured.titulo}\n\n`;
+  }
+
+  if (structured.descricao) {
+    text += `📝 DESCRIÇÃO\n${structured.descricao}\n\n`;
+  }
+
+  if (structured.bullets && structured.bullets.length > 0) {
+    text += `🎯 BULLET POINTS\n${structured.bullets.map(b => `• ${b}`).join('\n')}\n\n`;
+  }
+
+  if (structured.fichaTecnica && structured.fichaTecnica.length > 0) {
+    text += `📋 FICHA TÉCNICA\n${structured.fichaTecnica.map(f => `• ${f}`).join('\n')}\n\n`;
+  }
+
+  if (structured.destaques && structured.destaques.length > 0) {
+    text += `⭐ DESTAQUES\n${structured.destaques.map(d => `• ${d}`).join('\n')}\n\n`;
+  }
+
+  if (structured.hooksVideo && structured.hooksVideo.length > 0) {
+    text += `🎬 HOOKS PARA VÍDEO\n${structured.hooksVideo.map(h => `• ${h}`).join('\n')}\n\n`;
+  }
+
+  if (structured.roteiroVideo15s) {
+    text += `🎥 ROTEIRO DE VÍDEO (15s)\n`;
+    Object.entries(structured.roteiroVideo15s).forEach(([key, val]) => {
+      text += `• ${val}\n`;
+    });
+    text += '\n';
+  }
+
+  if (structured.hashtags && structured.hashtags.length > 0) {
+    text += `#️⃣ HASHTAGS\n${structured.hashtags.join(' ')}\n\n`;
+  }
+
+  if (structured.palavrasChave && structured.palavrasChave.length > 0) {
+    text += `🔑 PALAVRAS-CHAVE\n${structured.palavrasChave.join(', ')}\n\n`;
+  }
+
+  if (structured.termosBackend) {
+    text += `🔍 TERMOS BACKEND\n${structured.termosBackend}\n\n`;
+  }
+
+  if (structured.faixaPreco && structured.faixaPreco.min > 0) {
+    text += `💰 FAIXA DE PREÇO SUGERIDA\nR$ ${structured.faixaPreco.min} - R$ ${structured.faixaPreco.max}\n\n`;
+  }
+
+  if (structured.textoFlashDeal) {
+    text += `⚡ TEXTO FLASH DEAL\n${structured.textoFlashDeal}\n\n`;
+  }
+
+  if (structured.envio) {
+    text += `📦 ENVIO\nEmbalagem: ${structured.envio.embalagem || 'N/A'}\nPeso: ${structured.envio.pesoEstimado || 'N/A'}\nDimensões: ${structured.envio.dimensoes || 'N/A'}\n\n`;
+  }
+
+  if (structured.especificacoes) {
+    if (Array.isArray(structured.especificacoes)) {
+      text += `📐 ESPECIFICAÇÕES\n${structured.especificacoes.map(e => `• ${e}`).join('\n')}\n\n`;
+    } else {
+      text += `📐 ESPECIFICAÇÕES\n${Object.entries(structured.especificacoes).map(([k,v]) => `• ${k}: ${v}`).join('\n')}\n\n`;
+    }
+  }
+
+  if (structured.categoriaSugerida) {
+    text += `📂 CATEGORIA SUGERIDA\n${structured.categoriaSugerida}\n`;
+  }
+
+  return text;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { imageBase64, marketplace } = req.body;
+    const { imageBase64, marketplace, category } = req.body;
 
-    if (!imageBase64 || !marketplace) {
-      return res.status(400).json({ error: 'Missing imageBase64 or marketplace' });
+    if (!imageBase64) return res.status(400).json({ error: 'imageBase64 é obrigatório' });
+
+    // Default to mercadolivre if no marketplace specified (backward compatibility)
+    const mkt = (marketplace || 'mercadolivre').toLowerCase().replace(/[\s-]/g, '');
+
+    const config = MARKETPLACE_PROMPTS[mkt];
+    if (!config) {
+      return res.status(400).json({
+        error: `Marketplace "${marketplace}" não suportado. Use: mercadolivre, amazon, shopee, tiktokshop, magalu`
+      });
     }
 
-    const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
     if (!ANTHROPIC_API_KEY) {
-      return res.status(500).json({ error: 'AI API key not configured' });
+      return res.status(500).json({ error: 'ANTHROPIC_API_KEY não configurada' });
     }
 
-    const marketplaceInstructions = {
-      mercadolivre: `
-OTIMIZAÇÃO PARA MERCADO LIVRE BRASIL:
-- Títulos: até 80 caracteres, comece com a categoria principal, inclua marca e principais características
-- Estrutura título: [Produto] [Marca] [Principais características] [Condição]
-- Descrição: formatada com tópicos claros, sem emojis, foque em segurança, qualidade e atendimento
-- Utilize palavras-chave com alto volume de busca no Mercado Livre
-- Categoria: escolha a subcategoria mais específica disponível no catálogo
-- Preço: seja competitivo, considere a concorrência e custos de frete
-- Evite: palavras proibidas como "grátis", "melhor preço", "loja oficial"
-- Público: compradores brasileiros buscando segurança e bom atendimento
-      `,
-      amazon: `
-OTIMIZAÇÃO PARA AMAZON BRASIL:
-- Títulos: até 200 caracteres, estrutura: [Marca] [Produto] [Atributos principais]
-- Insira palavras-chave naturalmente no título para melhorar ranking
-- Descrição: máximo 5 bullet points, focados em benefícios e especificações técnicas
-- Utilize palavras-chave de cauda longa e long-tail keywords
-- Categoria: escolha a categoria exata do catálogo Amazon.com.br
-- Preço: considere algoritmo de buybox, seja competitivo
-- Ênfase em: compatibilidade, entrega rápida, garantia, devolução fácil
-- Evite: comparações diretas com concorrentes
-      `,
-      shopee: `
-OTIMIZAÇÃO PARA SHOPEE BRASIL:
-- Títulos: até 150 caracteres, otimizados para busca mobile
-- Destaque promoção/desconto no início do título se aplicável
-- Descrição: concisa e visual com emojis estratégicos para atrair atenção
-- Use palavras-chave populares na busca da plataforma Shopee
-- Categoria: escolha com precisão subcategorias bem definidas
-- Preço: utilize cupons e promoções flash sales para competitividade
-- Apelo: buscas mobile "novo", "promoção", "frete grátis", "estoque limitado"
-- Informações essenciais: condições de envio, política de devolução
-      `,
-      tiktokshop: `
-OTIMIZAÇÃO PARA TIKTOK SHOP BRASIL:
-- Títulos: criativos e virais (até 100 caracteres), use trending topics
-- Linguagem: Gen Z, descontraída, autêntica, engajante
-- Descrição: informal com emojis relevantes e hashtags trending
-- Palavras-chave: alinhadas com tendências atuais do TikTok
-- Categoria: conforme catálogo oficial TikTok Shop
-- Preço: apele para "super oferta", "estoque limitado", "promoção relâmpago"
-- Público: geração jovem, buscam trendiness, affordability, viral potential
-- Estimule comentários e compartilhamentos
-      `,
-      shein: `
-OTIMIZAÇÃO PARA SHEIN (MARKETPLACE GLOBAL):
-- Títulos: até 120 caracteres, foco em estilo, trend e apelo fashion
-- Descrição: bilíngue (português e inglês), duração média, storytelling
-- Palavras-chave: fashion, lifestyle, tendências atuais, apelo global
-- Categoria: moda/lifestyle com subcategorias fashion-specific
-- Preço: competitivo para varejo internacional, não excessivo
-- Destaque: estilo único, conforto, sustentabilidade se aplicável
-- Termos-chave: "trendy", "comfortable", "stylish", "affordable", "quality"
-- Público: jovens fashion-forward, seguem tendências globais
-      `,
-      instagram: `
-OTIMIZAÇÃO PARA INSTAGRAM SHOPPING:
-- Títulos: criativos e apetitosos (até 100 caracteres), capturam atenção
-- Descrição: storytelling emocional que conecta com audiência
-- Hashtags: 15-30 estratégicas para alcance orgânico máximo
-- Palavras-chave: visuais e emocionais, ressonância com lifestyle
-- Categoria: conforme Instagram Shop guidelines oficiais
-- Preço: claro com CTA (chamada para ação) definida
-- Ênfase em: experiência visual, lifestyle aspiracional, comunidade
-- Urgência: "estoque limitado", "últimas peças", "edição exclusiva"
-      `
-    };
+    // Clean base64 (remove data URL prefix if present)
+    const base64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-    const instructions = marketplaceInstructions[marketplace] || marketplaceInstructions.mercadolivre;
-
-    let mediaType = 'image/jpeg';
-    if (imageBase64.startsWith('data:image/png')) mediaType = 'image/png';
-    else if (imageBase64.startsWith('data:image/webp')) mediaType = 'image/webp';
-    else if (imageBase64.startsWith('data:image/gif')) mediaType = 'image/gif';
-
-    const base64Data = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
-
-    const prompt = `Você é um especialista em otimização de anúncios para marketplaces brasileiros e plataformas de e-commerce internacional.
-
-MARKETPLACE: ${marketplace.toUpperCase()}
-${instructions}
-
-ANÁLISE DETALHADA E MINUCIOSA DO PRODUTO:
-Examine a imagem com extrema atenção. Identifique e documente:
-
-1. TIPO E NOME DO PRODUTO: Qual é exatamente este produto? Descreva sua função principal.
-2. MARCA/FABRICANTE: Se visível, identifique a marca. Se não identificável, marque como "Genérica".
-3. CONDIÇÃO: É novo (nunca usado), usado, seminovo ou com defeito? Há sinais de desgaste, danos ou alterações?
-4. COR(ES): Todas as cores visíveis. Se houver variações, liste todas.
-5. MATERIAL(IS): Identifique todos os materiais visíveis (algodão, poliéster, plástico, metal, vidro, couro, silicone, etc).
-6. TAMANHO/DIMENSÕES: Se possível inferir tamanho ou se há indicação visual de escala. P, M, G ou medidas específicas?
-7. QUALIDADE VISUAL: Avalie qualidade geral: excelente (novo/perfeito), boa (bem conservado), aceitável (desgastado) ou ruim.
-8. CARACTERÍSTICAS ÚNICAS: Qualquer detalhe especial, diferencial, features exclusivas ou inovadoras.
-9. PREÇO ESTIMADO: Baseado em tipo, marca, qualidade e condição, qual seria a faixa de preço realista no Brasil?
-
-ESTRUTURA JSON OBRIGATÓRIA (responda APENAS com JSON válido, nenhum texto adicional):
-
-{
-  "titles": [
-      "Título 1 otimizado para SEO com palavras-chave naturais",
-      "Título 2 com variação de abordagem e diferentes keywords",
-      "Título 3 focando em benefícios e diferenciais do produto",
-      "Título 4 com ênfase em promoção ou urgência se apropriado"
-    ],
-    "description": "Descrição rica e atrativa com estrutura de bullet points. Explique características, benefícios práticos, material, tamanho, condição, qualidade, uso recomendado, e por que este produto é uma boa compra. Seja detalhista mas conciso. Use formatação clara.",
-    "keywords": "palavra-chave1, palavra-chave2, palavra-chave3, palavra-chave4, palavra-chave5, palavra-chave6, palavra-chave7, palavra-chave8, palavra-chave9, palavra-chave10",
-    "category": "Categoria principal conforme o marketplace especificado",
-    "priceRange": "R$ XXX - R$ YYY",
-    "attributes": {
-      "brand": "Nome da marca ou 'Genérica' se não identificada",
-      "color": "Cor ou cores principais separadas por vírgula",
-      "material": "Material ou materiais identificados na imagem",
-      "size": "Tamanho/Dimensão inferido ou 'Não identificado'",
-      "condition": "novo|usado|seminovo|defeituoso"
-    },
-    "quality": {
-      "score": 0-100,
-      "checks": {
-        "titleSEO": true/false,
-        "descriptionComplete": true/false,
-        "keywordsRelevant": true/false,
-        "categoryAccurate": true/false,
-        "priceRealistic": true/false
-      }
-  }
-}
-
-CRITÉRIOS PARA QUALITY SCORE:
-- titleSEO: Os títulos incluem keywords relevantes? Têm estrutura otimizada para busca?
-- descriptionComplete: A descrição tem detalhes suficientes, é clara, atrativa e honest?
-- keywordsRelevant: As 10 palavras-chave refletem exatamente o produto e buscas reais?
-- categoryAccurate: A categoria faz sentido perfeito para este produto no marketplace?
-- priceRealistic: O preço estimado é realista e competitivo no mercado brasileiro atual?
-
-REGRAS CRÍTICAS:
-- Retorne APENAS JSON válido e bem formado, zero texto adicional
-- Os 4 títulos devem ser diferentes em abordagem, cada um focando ângulo diferente
-- As 10 palavras-chave devem ser termos reais com volume de busca real
-- A descrição deve ser atrativa, honesta e focada no público-alvo
-- Sempre considere o público específico do marketplace escolhido
-- Se não conseguir identificar algo (marca, tamanho), deixe como "Não identificado"
-- Quality score deve refletir viabilidade REAL do anúncio`;
-
-    const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+    // Single call to Claude: analyze image + generate marketplace content
+    const userContent = [
+      {
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: 'image/jpeg',
+          data: base64
+        }
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2048,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: mediaType,
-                  data: base64Data
-                }
-              },
-              {
-                type: 'text',
-                text: prompt
-              }
-            ]
-          }
-        ]
-      })
-    });
-
-    if (!anthropicResponse.ok) {
-      const errorData = await anthropicResponse.json().catch(() => ({}));
-      console.error('Anthropic API error:', errorData);
-      return res.status(500).json({
-        error: 'AI service error',
-        details: errorData.error?.message || 'Unknown error'
-      });
-    }
-
-    const aiResult = await anthropicResponse.json();
-    const content = aiResult.content?.[0]?.text;
-
-    if (!content) {
-      return res.status(500).json({ error: 'No response from AI' });
-    }
-
-    let parsed;
-    try {
-      // Extract JSON from response, handling markdown code blocks
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+      {
+        type: 'text',
+        text: config.userPrompt + (category ? `\n\nDica adicional: o produto pertence à categoria "${category}".` : '')
       }
-      parsed = JSON.parse(jsonMatch[0]);
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError, 'Content:', content);
-      return res.status(500).json({
-        error: 'Failed to parse AI response',
-        raw: content
-      });
+    ];
+
+    const responseText = await callClaude(config.systemPrompt, userContent, 4000);
+
+    // Parse JSON response
+    let structured;
+    try {
+      let jsonText = responseText;
+      // Remove markdown code blocks if present
+      const jsonMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) jsonText = jsonMatch[1];
+      structured = JSON.parse(jsonText.trim());
+    } catch (e) {
+      // Fallback: return raw text
+      structured = { titulo: 'Produto', descricao: responseText };
     }
 
-    // Normalize: AI might return {listing:{...}} or just the listing fields directly
-    let listing = parsed.listing || parsed;
+    // Format for display (backward compatible with frontend)
+    const displayText = formatResultForDisplay(mkt, structured);
 
-    // Ensure titles is an array
-    if (!Array.isArray(listing.titles)) {
-      listing.titles = listing.title ? [listing.title] : ['Titulo nao gerado'];
-    }
-
-    // Ensure attributes exist
-    if (!listing.attributes) {
-      listing.attributes = { brand: 'Nao identificado', color: 'Nao identificado', material: 'Nao identificado', size: 'Nao identificado', condition: 'novo' };
-    }
-
-    // Ensure quality exists
-    if (!listing.quality) {
-      listing.quality = { score: 70, checks: { titleSEO: true, descriptionComplete: true, keywordsRelevant: true, categoryAccurate: true, priceRealistic: true } };
-    }
-
-    return res.status(200).json({ success: true, listing });
+    return res.status(200).json({
+      result: displayText,
+      structured: structured,
+      marketplace: mkt
+    });
 
   } catch (error) {
-    console.error('Server error:', error);
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: error.message
-    });
+    console.error('Generate error:', error);
+    return res.status(500).json({ error: 'Erro ao gerar anúncio', details: error.message });
   }
 }
