@@ -181,7 +181,6 @@
 
         /* Main Layout */
         #app {
-            display: flex;
             height: 100vh;
             overflow: hidden;
         }
@@ -269,9 +268,12 @@
 
         /* Main Content */
         .main-content {
-            flex: 1;
-            margin-left: 0;
-            transition: margin-left 0.3s ease;
+            margin-left: 280px;
+            width: calc(100vw - 280px);
+            overflow-y: auto;
+            height: 100vh;
+            padding: 2rem;
+            box-sizing: border-box;
         }
 
         .main-content.with-sidebar {
