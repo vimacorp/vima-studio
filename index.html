@@ -906,6 +906,38 @@
                 width: 100%;
             }
         }
+    
+
+    .action-buttons { display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap; }
+    .btn-action { flex: 1; min-width: 200px; padding: 1rem 1.5rem; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    .btn-images { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
+    .btn-video { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; }
+    .btn-action:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+    .btn-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .image-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .image-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; transition: transform 0.3s; }
+    .image-card:hover { transform: translateY(-4px); }
+    .image-card img { width: 100%; height: auto; display: block; }
+    .image-card-info { padding: 1rem; }
+    .image-card-info h4 { margin: 0 0 0.5rem; color: #e2e8f0; font-size: 0.9rem; }
+    .image-card-info p { margin: 0 0 0.75rem; color: #94a3b8; font-size: 0.8rem; }
+    .btn-download { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; width: 100%; transition: opacity 0.3s; }
+    .btn-download:hover { opacity: 0.85; }
+    #imageGallerySection, #videoSection { display: none; margin-top: 2rem; padding: 2rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
+    #imageGallerySection.active, #videoSection.active { display: block; }
+    .video-preview { background: #000; border-radius: 12px; overflow: hidden; margin-top: 1.5rem; max-width: 400px; margin-left: auto; margin-right: auto; }
+    .video-canvas { width: 100%; display: block; }
+    .video-controls { display: flex; gap: 1rem; padding: 1rem; background: rgba(0,0,0,0.5); justify-content: center; }
+    .video-controls button { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.5rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+    .video-controls button:hover { background: rgba(255,255,255,0.25); }
+    .scene-timeline { display: flex; gap: 0.5rem; margin-top: 1.5rem; flex-wrap: wrap; }
+    .scene-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.75rem; flex: 1; min-width: 120px; }
+    .scene-card h5 { margin: 0 0 0.25rem; color: #e2e8f0; font-size: 0.8rem; }
+    .scene-card p { margin: 0; color: #94a3b8; font-size: 0.75rem; }
+    .narration-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; }
+    .narration-box h4 { margin: 0 0 0.75rem; color: #e2e8f0; }
+    .narration-box p { margin: 0; color: #cbd5e1; line-height: 1.6; }
+    .bulk-download { margin-top: 1.5rem; text-align: center; }
     </style>
 </head>
 <body>
@@ -1232,6 +1264,18 @@
             <div class="spinner"></div>
             <div class="loading-text" id="loadingText">Processando...</div>
         </div>
+    </div>
+
+    
+    <div id="imageGallerySection">
+      <h2 style="margin-bottom: 1.5rem; color: #e2e8f0;">Imagens para Marketplace</h2>
+      <div id="imageGalleryContent"></div>
+      <div class="bulk-download"><button onclick="app.downloadAllImages()" class="btn-download" style="max-width: 300px; margin: 0 auto;">Baixar Todas as Imagens</button></div>
+    </div>
+
+    <div id="videoSection">
+      <h2 style="margin-bottom: 1.5rem; color: #e2e8f0;">Video Comercial</h2>
+      <div id="videoContent"></div>
     </div>
 
     <!-- Toast Container -->
@@ -1616,6 +1660,7 @@
                     const base64 = await this.fileToBase64(this.currentListing.photo);
 
                     // Call the serverless API
+                    this.currentListing.imageBase64 = base64;
                     const response = await fetch('/api/generate', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1694,9 +1739,212 @@
                   for (var ak in attrLabels) { if (attr[ak]) { h += '<div style="padding:0.5rem;background:rgba(255,255,255,0.03);border-radius:6px"><span style="font-size:0.75rem;color:var(--text-muted);display:block">' + attrLabels[ak] + '</span><span style="color:var(--text-primary);font-size:0.85rem">' + attr[ak] + '</span></div>'; } }
                   h += '</div></div>';
                 }
-                rs.innerHTML = h;
+                      h += '<div class="action-buttons">';
+      h += '<button class="btn-action btn-images" onclick="app.generateImages()">&#x1F5BC; Gerar Imagens</button>';
+      h += '<button class="btn-action btn-video" onclick="app.generateVideo()">&#x1F3AC; Gerar Video</button>';
+      h += '</div>';
+
+      rs.innerHTML = h;
                 rs.classList.add("active");
                 setTimeout(function() { var container = document.querySelector(".listing-container"); if (container && rs) { container.scrollTo({ top: rs.offsetTop - container.offsetTop - 20, behavior: "smooth" }); } }, 200);
+            }
+
+
+
+            async generateImages() {
+                var ib = this.currentListing.imageBase64;
+                if (!ib) { this.showToast("Envie uma imagem primeiro", "error"); return; }
+                var btn = document.querySelector(".btn-images");
+                if (btn) { btn.disabled = true; btn.textContent = "Processando imagens..."; }
+                try {
+                    var response = await fetch("/api/process-image", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ imageBase64: ib })
+                    });
+                    var data = await response.json();
+                    if (!data.success) throw new Error(data.error || "Erro no processamento");
+                    this.currentListing.images = data.images;
+                    this.displayImageGallery(data.images);
+                    this.showToast("Imagens geradas com sucesso!", "success");
+                } catch (error) {
+                    this.showToast("Erro ao gerar imagens: " + error.message, "error");
+                } finally {
+                    if (btn) { btn.disabled = false; btn.innerHTML = "&#x1F5BC; Gerar Imagens"; }
+                }
+            }
+
+            displayImageGallery(images) {
+                var section = document.getElementById("imageGallerySection");
+                var content = document.getElementById("imageGalleryContent");
+                var h = '<div class="image-gallery">';
+                for (var i = 0; i < images.length; i++) {
+                    var img = images[i];
+                    h += '<div class="image-card">';
+                    h += '<img src="' + img.base64 + '" alt="' + img.label + '" loading="lazy">';
+                    h += '<div class="image-card-info">';
+                    h += '<h4>' + img.label + '</h4>';
+                    h += '<p>' + img.width + "x" + img.height + " - " + img.format + '</p>';
+                    h += '<button class="btn-download" onclick="app.downloadImage(' + i + ')">Baixar Imagem</button>';
+                    h += '</div></div>';
+                }
+                h += "</div>";
+                content.innerHTML = h;
+                section.classList.add("active");
+                section.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+
+            downloadImage(index) {
+                var images = this.currentListing.images;
+                if (!images || !images[index]) return;
+                var img = images[index];
+                var a = document.createElement("a");
+                a.href = img.base64;
+                a.download = "produto-" + img.format.replace(/[:\/]/g, "-") + ".jpg";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+
+            downloadAllImages() {
+                var images = this.currentListing.images;
+                if (!images) return;
+                for (var i = 0; i < images.length; i++) {
+                    var self = this;
+                    (function(idx) { setTimeout(function() { self.downloadImage(idx); }, idx * 500); })(i);
+                }
+            }
+
+
+            async generateVideo() {
+                var listing = this.currentListing.result;
+                if (!listing) { this.showToast("Gere o anuncio primeiro", "error"); return; }
+                var btn = document.querySelector(".btn-video");
+                if (btn) { btn.disabled = true; btn.textContent = "Criando roteiro..."; }
+                try {
+                    var response = await fetch("/api/generate-video", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ listing: listing })
+                    });
+                    var data = await response.json();
+                    if (!data.success) throw new Error(data.error || "Erro na geracao");
+                    this.currentListing.video = data.video;
+                    this.displayVideoPreview(data.video);
+                    this.showToast("Roteiro de video gerado!", "success");
+                } catch (error) {
+                    this.showToast("Erro ao gerar video: " + error.message, "error");
+                } finally {
+                    if (btn) { btn.disabled = false; btn.innerHTML = "&#x1F3AC; Gerar Video"; }
+                }
+            }
+
+            displayVideoPreview(video) {
+                var section = document.getElementById("videoSection");
+                var content = document.getElementById("videoContent");
+                var scenes = video.scenes || [];
+                var h = '<div class="video-preview">';
+                h += '<canvas id="videoCanvas" class="video-canvas" width="1080" height="1920"></canvas>';
+                h += '<div class="video-controls">';
+                h += '<button onclick="app.playVideo()">&#x25B6; Reproduzir</button>';
+                h += '<button onclick="app.downloadVideo()">&#x2B07; Baixar Video</button>';
+                h += '</div></div>';
+                h += '<div class="scene-timeline">';
+                for (var i = 0; i < scenes.length; i++) {
+                    var s = scenes[i];
+                    h += '<div class="scene-card">';
+                    h += '<h5>Cena ' + s.id + " (" + s.duration + "s)" + '</h5>';
+                    h += '<p>' + (s.text || "") + '</p>';
+                    h += '</div>';
+                }
+                h += '</div>';
+                if (video.narrationFull) {
+                    h += '<div class="narration-box">';
+                    h += '<h4>Roteiro de Narracao</h4>';
+                    h += '<p>' + video.narrationFull + '</p>';
+                    h += '<button class="btn-download" style="margin-top:1rem;max-width:200px;" onclick="app.copyText(this.previousElementSibling.textContent)">Copiar Roteiro</button>';
+                    h += '</div>';
+                }
+                content.innerHTML = h;
+                section.classList.add("active");
+                this.drawScene(scenes[0]);
+                section.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+
+            drawScene(scene) {
+                if (!scene) return;
+                var canvas = document.getElementById("videoCanvas");
+                if (!canvas) return;
+                var ctx = canvas.getContext("2d");
+                var w = canvas.width, h = canvas.height;
+                var bg = scene.bgGradient || ["#1a1a2e", "#16213e"];
+                var grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, bg[0]);
+                grad.addColorStop(1, bg[1]);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+                ctx.fillStyle = scene.textColor || "#FFFFFF";
+                ctx.font = "bold 72px system-ui, -apple-system, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                var words = (scene.text || "").split(" ");
+                var lines = [], cur = "";
+                for (var i = 0; i < words.length; i++) {
+                    var test = cur + (cur ? " " : "") + words[i];
+                    if (ctx.measureText(test).width > w * 0.8) { lines.push(cur); cur = words[i]; } else { cur = test; }
+                }
+                lines.push(cur);
+                var lh = 90, sy = h / 2 - ((lines.length - 1) * lh) / 2;
+                for (var i = 0; i < lines.length; i++) ctx.fillText(lines[i], w / 2, sy + i * lh);
+                ctx.fillStyle = "rgba(255,255,255,0.3)";
+                ctx.font = "36px system-ui";
+                ctx.textAlign = "left";
+                ctx.fillText("Cena " + scene.id, 40, 60);
+            }
+
+            async playVideo() {
+                var video = this.currentListing.video;
+                if (!video || !video.scenes) return;
+                var scenes = video.scenes;
+                for (var i = 0; i < scenes.length; i++) {
+                    this.drawScene(scenes[i]);
+                    await new Promise(function(r) { setTimeout(r, scenes[i].duration * 1000); });
+                }
+            }
+
+            async downloadVideo() {
+                var self = this;
+                var video = self.currentListing.video;
+                if (!video || !video.scenes) return;
+                var canvas = document.getElementById("videoCanvas");
+                if (!canvas) return;
+                self.showToast("Gravando video...", "info");
+                var stream = canvas.captureStream(30);
+                var recorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
+                var chunks = [];
+                recorder.ondataavailable = function(e) { if (e.data.size > 0) chunks.push(e.data); };
+                recorder.onstop = function() {
+                    var blob = new Blob(chunks, { type: "video/webm" });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement("a");
+                    a.href = url; a.download = "video-comercial.webm";
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    self.showToast("Video baixado!", "success");
+                };
+                recorder.start();
+                var scenes = video.scenes;
+                for (var i = 0; i < scenes.length; i++) {
+                    self.drawScene(scenes[i]);
+                    await new Promise(function(r) { setTimeout(r, scenes[i].duration * 1000); });
+                }
+                recorder.stop();
+            }
+
+            copyText(text) {
+                navigator.clipboard.writeText(text).then(function() {
+                    app.showToast("Copiado!", "success");
+                });
             }
 
             copyToClipboard(elementId, fieldName) {
