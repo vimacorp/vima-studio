@@ -1262,7 +1262,9 @@
 
             async init() {
                 // Check authentication state
+                this.showLoading("Carregando...");
                 await this.checkAuth();
+                this.hideLoading();
 
                 // Setup event listeners
                 this.setupEventListeners();
