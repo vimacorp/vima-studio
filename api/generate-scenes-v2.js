@@ -19,6 +19,7 @@ import { createContext, runStage } from './pipeline/context.js';
 import { runVisualAnalyst } from './pipeline/stage1-visual-analyst.js';
 import { runCreativeDirector } from './pipeline/stage7-creative-director.js';
 import { runImageQualityCritic } from './pipeline/stage9-image-quality.js';
+import { runBrandVoiceAgent } from './pipeline/stage10-brand-voice.js';
 
 export const config = {
   maxDuration: 300, // 5 min — scene rendering can take a while
@@ -134,12 +135,19 @@ export default async function handler(req, res) {
       });
     }
 
+    // --- Stage 10: Brand Voice Agent (Wave 3) ------------------------------
+    // Gera título, bullets, descrição e keywords para o marketplace alvo.
+    // Roda em paralelo seria ideal, mas depende da visualAnalysis então fica
+    // no final do pipeline (rápido — só uma chamada de texto).
+    await runStage(ctx, 'stage10-brand-voice', (c) => runBrandVoiceAgent(c));
+
     return res.status(200).json({
       runId: ctx.runId,
       visualAnalysis: ctx.visualAnalysis,
       scenePlan: ctx.scenePlan,
       scenes: ctx.renderedScenes,
       qualityReport: ctx.qualityReport,
+      copy: ctx.copy,
       timeline: ctx.timeline,
     });
   } catch (err) {
