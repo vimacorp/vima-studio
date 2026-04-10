@@ -34,7 +34,18 @@ export default async function handler(req, res) {
     const body = req.body || {};
     // Accept either `imageBase64` (new contract) or `image` (legacy frontend)
     const imageBase64 = body.imageBase64 || body.image;
-    const imageMime = body.imageMime || 'image/jpeg';
+    // Auto-detect mime from base64 magic bytes (PNG/JPEG/GIF/WebP)
+        const detectMimeFromBase64 = (b64) => {
+          if (!b64) return 'image/jpeg';
+          const clean = b64.replace(/^data:[^;]+;base64,/, '');
+          const head = clean.slice(0, 16);
+          if (head.startsWith('iVBOR')) return 'image/png';
+          if (head.startsWith('/9j/')) return 'image/jpeg';
+          if (head.startsWith('R0lGOD')) return 'image/gif';
+          if (head.startsWith('UklGR')) return 'image/webp';
+          return 'image/jpeg';
+        };
+        const imageMime = body.imageMime || detectMimeFromBase64(imageBase64);
     const productName = body.productName || '';
     const productDescription = body.productDescription || '';
     const pkg = body.package || 'LITE';
