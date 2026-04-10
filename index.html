@@ -2834,6 +2834,7 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'Erro ao gerar cen\u00e1rios');
                 this.displayScenes(data.scenes);
+                this.displayCopy(data.copy);
                 this.showToast(data.scenes.length + ' cen\u00e1rios gerados!', 'success');
                 this.updateDownloadHub();
             } catch (err) {
@@ -2864,6 +2865,76 @@
                 grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
                 grid.style.gap = '16px';
             }
+
+        displayCopy(copy) {
+            if (!copy) return;
+            let host = document.getElementById("copyContent");
+            if (!host) {
+                const scenesHost = document.getElementById("scenesContent");
+                host = document.createElement("div");
+                host.id = "copyContent";
+                host.style.marginTop = "24px";
+                if (scenesHost && scenesHost.parentNode) {
+                    scenesHost.parentNode.insertBefore(host, scenesHost.nextSibling);
+                } else {
+                    document.body.appendChild(host);
+                }
+            }
+            const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+            const title = esc(copy.title || "");
+            const bullets = Array.isArray(copy.bullets) ? copy.bullets : [];
+            const description = esc(copy.description || "");
+            const keywords = Array.isArray(copy.keywords) ? copy.keywords : [];
+            const tone = esc(copy.tone || "");
+            const marketplace = esc(copy.marketplace || "");
+            const titleLen = (copy.title || "").length;
+            host.innerHTML = `
+                <div style="border:1px solid #222;border-radius:12px;padding:20px;background:#0A0A0A;color:#EEE;font-family:Inter,sans-serif;">
+                  <h3 style="margin:0 0 16px;color:#E88923;font-size:18px;">Copy do anúncio <span style="opacity:.6;font-weight:400;font-size:13px;">— ${marketplace.toUpperCase()} · ${tone}</span></h3>
+                  <div style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                      <strong style="font-size:13px;opacity:.7;">Título <span style="opacity:.5;">(${titleLen} car.)</span></strong>
+                      <button data-copy="title" style="background:#E88923;color:#000;border:0;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Copiar</button>
+                    </div>
+                    <div id="vimaCopyTitle" style="font-size:15px;line-height:1.4;">${title}</div>
+                  </div>
+                  <div style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                      <strong style="font-size:13px;opacity:.7;">Bullets</strong>
+                      <button data-copy="bullets" style="background:#E88923;color:#000;border:0;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Copiar</button>
+                    </div>
+                    <ul id="vimaCopyBullets" style="margin:0;padding-left:20px;font-size:14px;line-height:1.6;">${bullets.map(b=>`<li>${esc(b)}</li>`).join("")}</ul>
+                  </div>
+                  <div style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                      <strong style="font-size:13px;opacity:.7;">Descrição</strong>
+                      <button data-copy="description" style="background:#E88923;color:#000;border:0;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Copiar</button>
+                    </div>
+                    <div id="vimaCopyDesc" style="font-size:13px;line-height:1.6;white-space:pre-wrap;opacity:.9;">${description}</div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                      <strong style="font-size:13px;opacity:.7;">Keywords</strong>
+                      <button data-copy="keywords" style="background:#E88923;color:#000;border:0;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">Copiar</button>
+                    </div>
+                    <div id="vimaCopyKw" style="display:flex;flex-wrap:wrap;gap:6px;">${keywords.map(k=>`<span style="background:#151515;border:1px solid #2a2a2a;padding:4px 10px;border-radius:999px;font-size:12px;">${esc(k)}</span>`).join("")}</div>
+                  </div>
+                </div>`;
+            host.querySelectorAll("[data-copy]").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const kind = btn.getAttribute("data-copy");
+                    let text = "";
+                    if (kind === "title") text = copy.title || "";
+                    else if (kind === "bullets") text = bullets.join("\n");
+                    else if (kind === "description") text = copy.description || "";
+                    else if (kind === "keywords") text = keywords.join(", ");
+                    navigator.clipboard.writeText(text);
+                    const original = btn.textContent;
+                    btn.textContent = "Copiado!";
+                    setTimeout(() => { btn.textContent = original; }, 1500);
+                });
+            });
+        }
 
 
         downloadScene(index) {
