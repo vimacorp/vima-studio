@@ -128,7 +128,7 @@ export async function runImageQualityCritic(ctx) {
 
   const body = {
     model: MODEL,
-    max_tokens: 2000,
+    max_tokens: 8000,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content }],
   };
