@@ -197,8 +197,9 @@ async function freepikReimagine(ctx, scene) {
   const key = process.env.FREEPIK_API_KEY;
   if (!key) return null;
 
+  const aspect = mapAspectFreepik(scene.aspectRatio);
   const res = await fetch(
-    'https://api.freepik.com/v1/ai/image-to-image/flux-dev',
+    'https://api.freepik.com/v1/ai/beta/text-to-image/reimagine-flux',
     {
       method: 'POST',
       headers: {
@@ -206,20 +207,32 @@ async function freepikReimagine(ctx, scene) {
         'x-freepik-api-key': key,
       },
       body: JSON.stringify({
-        image: `data:${ctx.input.imageMime};base64,${ctx.input.imageBase64}`,
+        image: ctx.input.imageBase64,
         prompt: scene.promptEn,
-        negative_prompt: scene.negativePromptEn,
-        guidance_scale: scene.guidanceScale,
-        num_inference_steps: 28,
-        aspect_ratio: scene.aspectRatio,
+        imagination: 'wild',
+        aspect_ratio: aspect,
       }),
     }
   );
-  if (!res.ok) throw new Error(`freepik ${res.status}`);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`freepik ${res.status} ${errText.slice(0, 200)}`);
+  }
   const data = await res.json();
-  return data?.data?.[0]?.base64
-    ? `data:image/png;base64,${data.data[0].base64}`
-    : data?.data?.[0]?.url || null;
+  // Beta sync response: { data: { generated: [url], task_id, status } }
+  const url = data?.data?.generated?.[0];
+  return url || null;
+}
+
+function mapAspectFreepik(ar) {
+  switch (ar) {
+    case '1:1': return 'square_1_1';
+    case '3:4': return 'traditional_3_4';
+    case '4:3': return 'classic_4_3';
+    case '9:16': return 'social_story_9_16';
+    case '16:9': return 'widescreen_16_9';
+    default: return 'square_1_1';
+  }
 }
 
 async function photoroomSceneReplace(ctx, scene) {
