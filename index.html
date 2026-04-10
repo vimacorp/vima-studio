@@ -2826,7 +2826,7 @@
             scenesLoading.style.display = 'flex';
             scenesGrid.innerHTML = '';
             try {
-                const response = await fetch('/api/generate-scenes', {
+                const response = await fetch('/api/generate-scenes-v2', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ image: this.currentListing.imageBase64 })
