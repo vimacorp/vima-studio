@@ -75,9 +75,22 @@ export default async function handler(req, res) {
     // Uses Freepik Reimagine Flux as primary, Photoroom as fallback,
     // SVG placeholder as last resort. Same strategy the old endpoint had.
     await runStage(ctx, 'stage8-scene-rendering', async (c) => {
-      const settled = await Promise.allSettled(
-        c.scenePlan.scenes.map((scene) => renderScene(c, scene))
-      );
+      const settled = await (async () => {
+        const __list = c.scenePlan.scenes;
+        const __res = new Array(__list.length);
+        let __i = 0;
+        const __CONC = 3;
+        async function __w() {
+          for (;;) {
+            const k = __i++;
+            if (k >= __list.length) return;
+            try { __res[k] = { status: 'fulfilled', value: await renderScene(c, __list[k]) }; }
+            catch (e) { __res[k] = { status: 'rejected', reason: e }; }
+          }
+        }
+        await Promise.all(Array.from({ length: Math.min(__CONC, __list.length) }, __w));
+        return __res;
+      })();
       c.renderedScenes = settled.map((r, i) => {
         const scene = c.scenePlan.scenes[i];
         if (r.status === 'fulfilled') {
@@ -118,9 +131,22 @@ export default async function handler(req, res) {
           })
           .filter(Boolean);
 
-        const results = await Promise.allSettled(
-          jobs.map((j) => renderScene(c, j.patched))
-        );
+        const results = await (async () => {
+          const __list = jobs;
+          const __res = new Array(__list.length);
+          let __i = 0;
+          const __CONC = 3;
+          async function __w() {
+            for (;;) {
+              const k = __i++;
+              if (k >= __list.length) return;
+              try { __res[k] = { status: 'fulfilled', value: await renderScene(c, __list[k].patched) }; }
+              catch (e) { __res[k] = { status: 'rejected', reason: e }; }
+            }
+          }
+          await Promise.all(Array.from({ length: Math.min(__CONC, __list.length) }, __w));
+          return __res;
+        })();
 
         results.forEach((r, i) => {
           const id = jobs[i].sceneId;
