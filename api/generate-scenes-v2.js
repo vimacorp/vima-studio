@@ -18,6 +18,7 @@
 import { createContext, runStage } from './pipeline/context.js';
 import { runVisualAnalyst } from './pipeline/stage1-visual-analyst.js';
 import { runCreativeDirector } from './pipeline/stage7-creative-director.js';
+import { runImageQualityCritic } from './pipeline/stage9-image-quality.js';
 
 export const config = {
   maxDuration: 300, // 5 min — scene rendering can take a while
@@ -79,11 +80,66 @@ export default async function handler(req, res) {
       });
     });
 
+    // --- Stage 9: Image Quality Critic + Regen loop (Wave 2) -----------------
+    // Claude vision scores every rendered scene. Scenes that fail get ONE
+    // retry with adjusted prompts coming from the critic.
+    await runStage(ctx, 'stage9-image-quality', (c) => runImageQualityCritic(c));
+
+    const failed = (ctx.qualityReport?.results || []).filter((r) => r.pass === false);
+    if (failed.length > 0) {
+      await runStage(ctx, 'stage9-regen', async (c) => {
+        const byId = new Map(c.renderedScenes.map((s) => [s.id, s]));
+        const jobs = failed
+          .map((fr) => {
+            const original = byId.get(fr.sceneId);
+            if (!original) return null;
+            const patched = {
+              ...original,
+              promptEn: fr.fixes?.promptEn
+                ? `${original.promptEn}. ${fr.fixes.promptEn}`
+                : original.promptEn,
+              negativePromptEn: fr.fixes?.negativePromptEn
+                ? `${original.negativePromptEn || ''} ${fr.fixes.negativePromptEn}`.trim()
+                : original.negativePromptEn,
+            };
+            return { sceneId: fr.sceneId, patched };
+          })
+          .filter(Boolean);
+
+        const results = await Promise.allSettled(
+          jobs.map((j) => renderScene(c, j.patched))
+        );
+
+        results.forEach((r, i) => {
+          const id = jobs[i].sceneId;
+          const idx = c.renderedScenes.findIndex((s) => s.id === id);
+          if (idx < 0) return;
+          if (r.status === 'fulfilled') {
+            c.renderedScenes[idx] = {
+              ...c.renderedScenes[idx],
+              ...r.value,
+              status: 'ok-retry',
+              regenerated: true,
+            };
+          } else {
+            c.renderedScenes[idx] = {
+              ...c.renderedScenes[idx],
+              regenerated: true,
+              regenError: r.reason?.message || String(r.reason),
+            };
+          }
+        });
+
+        return { retried: jobs.length };
+      });
+    }
+
     return res.status(200).json({
       runId: ctx.runId,
       visualAnalysis: ctx.visualAnalysis,
       scenePlan: ctx.scenePlan,
       scenes: ctx.renderedScenes,
+      qualityReport: ctx.qualityReport,
       timeline: ctx.timeline,
     });
   } catch (err) {
