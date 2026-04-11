@@ -2159,8 +2159,6 @@
                 }
                       h += '<div class="action-buttons">';
             h += '<button class="btn-action btn-carrossel" onclick="app.generateCarrossel()">Gerar Carrossel Neuromarketing</button>';
-            h += '<button class="btn-action btn-images" onclick="app.generateImages()">&#x1F5BC; Gerar Imagens</button>';
-            h += '<button class="btn-action btn-removebg" onclick="app.removeBg()">&#x2702; Remover Fundo</button>';
             h += '<button class="btn-action btn-video" onclick="app.generateVideo()">&#x1F3AC; Gerar Video</button>';
             h += '<button class="btn-action btn-influencer" onclick="app.generateInfluencer()">&#x1F31F; IA Influencer</button>';
             h += '<button class="btn-action btn-scenes" onclick="app.generateScenes()">&#x1F3A8; Gerar Cen&#x00E1;rios</button>';
@@ -2178,7 +2176,7 @@
                 const orig = btn ? btn.innerHTML : '';
                 if (btn) { btn.disabled = true; btn.innerHTML = 'Gerando carrossel...'; }
                 try {
-                    let b64 = this.currentListing.photo || '';
+                    let b64 = this.currentListing.imageBase64 || '';
                     if (b64.indexOf(',') > -1) b64 = b64.split(',')[1];
                     const mk = this.currentListing.marketplace || 'mercadolivre';
                     const resp = await fetch('/api/generate-carrossel', {
@@ -2222,29 +2220,6 @@
                 c.scrollIntoView({ behavior: 'smooth' });
             }
 
-            async generateImages() {
-                var ib = this.currentListing.imageBase64;
-                if (!ib) { this.showToast("Envie uma imagem primeiro", "error"); return; }
-                var btn = document.querySelector(".btn-images");
-                if (btn) { btn.disabled = true; btn.textContent = "Processando imagens..."; }
-                try {
-                    var response = await fetch("/api/process-image", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ imageBase64: ib })
-                    });
-                    var data = await response.json();
-                    if (!data.success) throw new Error(data.error || "Erro no processamento");
-                    this.currentListing.images = data.images;
-                    this.displayImageGallery(data.images);
-                    this.showToast("Imagens geradas com sucesso!", "success");
-            this.updateDownloadHub();
-                } catch (error) {
-                    this.showToast("Erro ao gerar imagens: " + error.message, "error");
-                } finally {
-                    if (btn) { btn.disabled = false; btn.innerHTML = "&#x1F5BC; Gerar Imagens"; }
-                }
-            }
 
             displayImageGallery(images) {
                 var section = document.getElementById("imageGallerySection");
@@ -2497,29 +2472,6 @@
                 });
             }
 
-        async removeBg() {
-            if (!this.currentListing || !this.currentListing.imageBase64) {
-                this.showToast('Nenhuma imagem carregada', 'error');
-                return;
-            }
-            var section = document.getElementById('removeBgSection');
-            section.style.display = 'block';
-            var resultDiv = document.getElementById('removeBgResult');
-            resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;"><div class="loading-spinner"></div><p style="margin-top:1rem;color:var(--text-secondary);">Removendo fundo da imagem...</p></div>';
-            var tolerance = document.getElementById('bgTolerance') ? document.getElementById('bgTolerance').value : 35;
-            try {
-                var response = await fetch('/api/remove-bg', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ imageBase64: this.currentListing.imageBase64, tolerance: parseInt(tolerance), edgeSoftness: 8 })
-                });
-                var data = await response.json();
-                if (!data.success) throw new Error(data.error || 'Erro ao remover fundo');
-                this.displayRemoveBg(data.images);
-            } catch (err) {
-                resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">Erro: ' + err.message + '</div>';
-            }
-        }
 
         displayRemoveBg(images) {
             var resultDiv = document.getElementById('removeBgResult');
