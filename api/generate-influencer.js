@@ -199,7 +199,7 @@ export default async function handler(req, res) {
     const productName = body.productName || 'produto';
     const productDescription = body.productDescription || '';
     const marketplace = body.marketplace || 'Mercado Livre';
-    const duration = Math.min(10, Math.max(5, Number(body.duration) || 5));
+    const duration =Math.min(10, Math.max(5, Number(body.duration) || 10)));
 
     if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' });
 
