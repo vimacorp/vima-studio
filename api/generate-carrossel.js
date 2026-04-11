@@ -33,7 +33,13 @@ function buildRoadmap(listing, marketplace) {
   const mkLabel = MARKETPLACE_LABEL[marketplace] || marketplace;
   const base = 'Professional e-commerce product photography. The reference product must appear exactly as in the input image (same color, shape, materials, proportions). Sharp focus, studio-quality lighting, clean composition, premium aesthetic, consistent brand visual identity. No text unless specified.';
 
+  const aspect = MARKETPLACE_ASPECT[marketplace] || 'square_1_1';
   return [
+    {
+      role: 'photoroom',
+      label: 'Foto limpa (fundo branco)',
+      prompt: base + ' Clean e-commerce product photo on a pure white seamless background (#FFFFFF), studio softbox lighting, accurate colors, full product visible, centered composition, no text, no props, no decorative elements, high-resolution catalog quality. Keep the product identical to the reference. Aspect ratio ' + aspect + '.'
+    },
     {
       role: 'hook',
       label: 'Gancho visual (capa principal)',
