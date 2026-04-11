@@ -13,7 +13,7 @@ import sharp from 'sharp';
 export const config = { maxDuration: 300 };
 
 const FREEPIK_API_KEY = process.env.FREEPIK_API_KEY;
-const FREEPIK_ENDPOINT = 'https://api.freepik.com/v1/ai/text-to-image/flux-kontext-pro';
+const FREEPIK_ENDPOINT = 'https://api.freepik.com/v1/ai/text-to-image/imagen3';
 
 const MARKETPLACE_ASPECT = {
   mercado_livre: 'square_1_1',
