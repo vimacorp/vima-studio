@@ -2,29 +2,82 @@ import sharp from 'sharp';
 
 export const config = { maxDuration: 60 };
 
+const PHOTOROOM_V2 = 'https://image-api.photoroom.com/v2/edit';
+const BORDER_PX = 24;
+const BORDER_RGB = { r: 40, g: 40, b: 40 }; // dark gray — high contrast vs white products
+
+// Pre-process: add a dark border so Photoroom never sees a pure-white frame
+async function addContrastBorder(base64Data) {
+  const buf = Buffer.from(base64Data, 'base64');
+  const out = await sharp(buf)
+    .extend({
+      top: BORDER_PX,
+      bottom: BORDER_PX,
+      left: BORDER_PX,
+      right: BORDER_PX,
+      background: { ...BORDER_RGB, alpha: 1 }
+    })
+    .png()
+    .toBuffer();
+  return out.toString('base64');
+}
+
+// Post-process: crop the added border back off
+async function cropBorder(transparentBase64) {
+  const buf = Buffer.from(transparentBase64, 'base64');
+  const meta = await sharp(buf).metadata();
+  const w = meta.width || 0;
+  const h = meta.height || 0;
+  if (w <= BORDER_PX * 2 || h <= BORDER_PX * 2) return transparentBase64;
+  const cropped = await sharp(buf)
+    .extract({
+      left: BORDER_PX,
+      top: BORDER_PX,
+      width: w - BORDER_PX * 2,
+      height: h - BORDER_PX * 2
+    })
+    .png()
+    .toBuffer();
+  return cropped.toString('base64');
+}
+
 async function removeWithPhotoroom(base64Data) {
   const apiKey = process.env.PHOTOROOM_API_KEY;
   if (!apiKey) throw new Error('PHOTOROOM_API_KEY not set');
-  console.log('[RemoveBG] Trying Photoroom...');
+  console.log('[RemoveBG] Trying Photoroom v2 (with contrast border)...');
 
-  const imageBuffer = Buffer.from(base64Data, 'base64');
-  const blob = new Blob([imageBuffer], { type: 'image/png' });
-  const formData = new FormData();
-  formData.append('image_file', blob, 'image.png');
+  // 1) Add border for white-on-white safety
+  const borderedB64 = await addContrastBorder(base64Data);
+  const borderedBuf = Buffer.from(borderedB64, 'base64');
 
-  const response = await fetch('https://sdk.photoroom.com/v1/segment', {
+  // 2) Build multipart with v2 segmentation params
+  const blob = new Blob([borderedBuf], { type: 'image/png' });
+  const fd = new FormData();
+  fd.append('imageFile', blob, 'image.png');
+  fd.append('format', 'png');
+  fd.append('size', 'full');
+  // segmentation.prompt tells the AI to keep the PRODUCT as foreground,
+  // even when the product itself is white and the background is white
+  fd.append('segmentation.prompt', 'product');
+  fd.append('segmentation.mode', 'foreground');
+
+  const response = await fetch(PHOTOROOM_V2, {
     method: 'POST',
-    headers: { 'x-api-key': apiKey },
-    body: formData
+    headers: { 'x-api-key': apiKey, Accept: 'image/png, application/json' },
+    body: fd
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error('Photoroom ' + response.status + ': ' + errorText);
+    throw new Error('Photoroom v2 ' + response.status + ': ' + errorText);
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer).toString('base64');
+  const resultB64 = Buffer.from(arrayBuffer).toString('base64');
+
+  // 3) Crop the border back off
+  const finalB64 = await cropBorder(resultB64);
+  return finalB64;
 }
 
 async function removeWithSharp(base64Data) {
@@ -36,24 +89,19 @@ async function removeWithSharp(base64Data) {
     .ensureAlpha()
     .toBuffer({ resolveWithObject: true });
 
-  const pixels = new Uint8Array(data);
-  const w = info.width;
-  const samplePoints = [0, w - 1, (info.height - 1) * w, (info.height - 1) * w + w - 1];
-  var bgR = 0, bgG = 0, bgB = 0;
+  const pixels = new Uint8ClampedArray(data);
+  const samplePoints = [0, 4, info.width * 4 - 4, (info.height - 1) * info.width * 4];
+  let bgR = 255, bgG = 255, bgB = 255;
   for (var idx of samplePoints) {
-    bgR += pixels[idx * 4];
-    bgG += pixels[idx * 4 + 1];
-    bgB += pixels[idx * 4 + 2];
+    bgR = pixels[idx];
+    bgG = pixels[idx + 1];
+    bgB = pixels[idx + 2];
   }
-  bgR = Math.round(bgR / 4);
-  bgG = Math.round(bgG / 4);
-  bgB = Math.round(bgB / 4);
-
-  var tolerance = 35;
-  for (var i = 0; i < pixels.length; i += 4) {
-    var dr = Math.abs(pixels[i] - bgR);
-    var dg = Math.abs(pixels[i + 1] - bgG);
-    var db = Math.abs(pixels[i + 2] - bgB);
+  const tolerance = 25;
+  for (let i = 0; i < pixels.length; i += 4) {
+    const dr = Math.abs(pixels[i] - bgR);
+    const dg = Math.abs(pixels[i + 1] - bgG);
+    const db = Math.abs(pixels[i + 2] - bgB);
     if (dr < tolerance && dg < tolerance && db < tolerance) {
       pixels[i + 3] = 0;
     }
@@ -94,31 +142,29 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   try {
-    const { imageBase64 } = req.body;
+    const imageBase64 = String(req.body?.imageBase64 || req.body?.image || '').replace(/^data:image\/[^;]+;base64,/, '');
     if (!imageBase64) return res.status(400).json({ success: false, error: 'imageBase64 is required' });
 
-    const base64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-    var transparentBase64 = null;
-    var provider = 'sharp-fallback';
-    var detectedBg = { r: 255, g: 255, b: 255 };
+    let transparentBase64 = null;
+    let detectedBg = null;
+    let provider = 'sharp-fallback';
 
     console.log('[RemoveBG] PHOTOROOM_API_KEY available:', !!process.env.PHOTOROOM_API_KEY);
 
     if (process.env.PHOTOROOM_API_KEY) {
       try {
-        transparentBase64 = await removeWithPhotoroom(base64);
-        provider = 'photoroom';
-        console.log('[RemoveBG] SUCCESS with Photoroom');
+        transparentBase64 = await removeWithPhotoroom(imageBase64);
+        provider = 'photoroom-v2';
+        console.log('[RemoveBG] SUCCESS with Photoroom v2');
       } catch (e) {
         console.error('[RemoveBG] Photoroom failed:', e.message);
       }
     }
 
     if (!transparentBase64) {
-      var result = await removeWithSharp(base64);
-      transparentBase64 = result.b64;
-      detectedBg = result.detectedBg;
-      provider = 'sharp-fallback';
+      const fallback = await removeWithSharp(imageBase64);
+      transparentBase64 = fallback.b64;
+      detectedBg = fallback.detectedBg;
     }
 
     const whiteBase64 = await addWhiteBackground(transparentBase64);
