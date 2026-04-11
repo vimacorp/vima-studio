@@ -1,106 +1,244 @@
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+// api/generate-influencer.js
+// VIMA STUDIO - Real "AI Influencer" demo video.
+// Pipeline:
+//   product image -> tmpfiles host
+//   -> Freepik Flux Kontext (generate still: realistic person using product)
+//   -> Kling 2.1 i2v (animate the still)
+//   -> hosted MP4 URL
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+export const config = { maxDuration: 300 };
 
+const PIAPI_BASE = 'https://api.piapi.ai/api/v1';
+const FREEPIK_BASE = 'https://api.freepik.com/v1';
+
+function stripDataPrefix(b64) {
+  return String(b64 || '').replace(/^data:image\/[^;]+;base64,/, '');
+}
+
+async function uploadToTmpfiles(base64, mime) {
+  const buffer = Buffer.from(base64, 'base64');
+  const ext = (mime || 'image/jpeg').split('/')[1] || 'jpg';
+  const blob = new Blob([buffer], { type: mime || 'image/jpeg' });
+  const fd = new FormData();
+  fd.append('file', blob, `vima-${Date.now()}.${ext}`);
+  const r = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: fd });
+  if (!r.ok) throw new Error(`tmpfiles upload failed: HTTP ${r.status}`);
+  const j = await r.json();
+  const url = j?.data?.url;
+  if (!url) throw new Error('tmpfiles: no url in response: ' + JSON.stringify(j));
+  return url.replace('https://tmpfiles.org/', 'https://tmpfiles.org/dl/');
+}
+
+async function fetchAsBase64(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`fetch image failed: HTTP ${r.status}`);
+  const buf = Buffer.from(await r.arrayBuffer());
+  return buf.toString('base64');
+}
+
+async function buildInfluencerStillPrompt({ productName, productDescription, marketplace }) {
+  const sys = 'You write a single concise prompt for an image generation model that edits an existing product image into a realistic lifestyle photo of a person actually USING the product. Rules: Brazilian context, natural daylight, no text overlays, no logos, photorealistic, single paragraph, <70 words, English. Describe the scene, the person (gender/age range only, no facial features), the action of using the product, the environment, and lighting.';
+  const user = `Product: ${productName}\nDescription: ${productDescription || '(none)'}\nMarketplace: ${marketplace || 'Mercado Livre'}\n\nWrite ONE prompt to transform the product image into a lifestyle photo of a person using the product. Output only the prompt.`;
   try {
-    var { listing, platform, tone } = req.body;
-    if (!listing) return res.status(400).json({ error: 'listing object is required' });
-
-    var ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-    if (!ANTHROPIC_API_KEY) return res.status(500).json({ error: 'AI API key not configured' });
-
-    var selectedPlatform = platform || 'instagram';
-    var selectedTone = tone || 'descontraido';
-
-    var productInfo = 'Titulos: ' + (listing.titles || []).join(' | ') + '\n' +
-      'Descricao: ' + (listing.description || '') + '\n' +
-      'Keywords: ' + (listing.keywords || '') + '\n' +
-      'Preco: ' + (listing.priceRange || '') + '\n' +
-      'Marca: ' + (listing.attributes && listing.attributes.brand || 'Generica') + '\n' +
-      'Cor: ' + (listing.attributes && listing.attributes.color || '') + '\n' +
-      'Material: ' + (listing.attributes && listing.attributes.material || '') + '\n' +
-      'Condicao: ' + (listing.attributes && listing.attributes.condition || 'novo');
-
-    var toneMap = {
-      descontraido: 'Descontraido, divertido, usa girias e emojis, como um influencer jovem e animado',
-      profissional: 'Profissional e confiavel, como um especialista ou consultor do nicho, usa dados e fatos',
-      luxo: 'Sofisticado e elegante, como um influencer de lifestyle premium, linguagem refinada',
-      genuino: 'Autentico e sincero, como alguem que realmente testou e amou o produto, relato pessoal',
-      humor: 'Comico e engracado, usa humor e memes, viral e compartilhavel',
-      tecnico: 'Tecnico e detalhista, como um reviewer especializado, foca em specs e comparacoes'
-    };
-
-    var platformMap = {
-      instagram: { name: 'Instagram', specs: 'Caption ate 2200 caracteres, 20-30 hashtags estrategicas, formato visual, stories e reels' },
-      tiktok: { name: 'TikTok', specs: 'Script de video 15-60s, hook nos primeiros 3s, trending sounds, hashtags virais, CTA forte' },
-      youtube: { name: 'YouTube', specs: 'Roteiro de review 3-5min, thumbnail title, descricao SEO, tags, timestamps, CTA subscribe' },
-      twitter: { name: 'X/Twitter', specs: 'Thread de 3-5 tweets, 280 chars cada, hashtags relevantes, tom conversacional, CTA final' },
-      blog: { name: 'Blog/Site', specs: 'Artigo review 500-800 palavras, SEO otimizado, H2/H3, pros e contras, nota final, CTA' }
-    };
-
-    var platInfo = platformMap[selectedPlatform] || platformMap.instagram;
-    var toneDesc = toneMap[selectedTone] || toneMap.descontraido;
-
-    var prompt = 'Voce e uma IA Influencer especialista em marketing de produtos para e-commerce brasileiro.\n\nPRODUTO:\n' + productInfo + '\n\nPLATAFORMA: ' + platInfo.name + '\nESPECIFICACOES: ' + platInfo.specs + '\n\nTOM/PERSONA: ' + toneDesc + '\n\nCrie conteudo de influencer digital para promover este produto. O conteudo deve parecer 100% autentico, como se um influencer real estivesse recomendando.\n\nREGRAS:\n- Conteudo 100% em portugues brasileiro natural\n- Deve parecer organico, NAO parecer anuncio pago\n- Inclua emojis de forma natural e estrategica\n- Adapte linguagem ao tom/persona escolhido\n- Inclua CTA (chamada para acao) natural\n- Mencione preco se disponivel\n- Crie conteudo pronto para copiar e colar\n- Seja criativo e engajante\n\nResponda APENAS JSON valido:\n{\n  "mainContent": "O conteudo principal completo (caption, script, artigo, thread) pronto para uso",\n  "hook": "Frase de gancho inicial para captar atencao nos primeiros 3 segundos",\n  "hashtags": ["hashtag1", "hashtag2", "ate20hashtags"],\n  "cta": "Chamada para acao principal",\n  "alternativeVersions": [\n    {"label": "Versao curta", "content": "Versao resumida do conteudo para formato stories ou post rapido"},\n    {"label": "Versao engajamento", "content": "Versao focada em gerar comentarios e compartilhamentos"}\n  ],\n  "suggestedVisual": "Descricao da imagem/video ideal para acompanhar este conteudo",\n  "bestTimeToPost": "Melhor horario/dia para postar este tipo de conteudo",\n  "estimatedEngagement": "Estimativa de alcance e engajamento esperado"\n}';
-
-    var r = await fetch('https://api.anthropic.com/v1/messages', {
+    if (!process.env.ANTHROPIC_API_KEY) throw new Error('no anthropic key');
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2048,
-        messages: [{ role: 'user', content: prompt }]
+        max_tokens: 400,
+        system: sys,
+        messages: [{ role: 'user', content: user }]
       })
     });
+    if (r.ok) {
+      const j = await r.json();
+      const text = j?.content?.[0]?.text?.trim();
+      if (text) return text.replace(/^["']|["']$/g, '');
+    }
+  } catch (e) {
+    console.warn('influencer still prompt fallback:', e?.message || e);
+  }
+  return `Photorealistic Brazilian lifestyle photo of a young adult naturally using ${productName} at home, soft natural daylight, casual outfit, candid composition, modern apartment background, product clearly visible and in focus, premium commercial photography style`;
+}
 
-    if (!r.ok) {
-      var e = await r.json().catch(function() { return {}; });
-      return res.status(500).json({ error: 'AI error', details: e.error && e.error.message || 'Unknown' });
+async function buildInfluencerMotionPrompt({ productName }) {
+  return `Subtle natural body motion of the person interacting with ${productName}, soft camera dolly-in, realistic micro-expressions, premium commercial style, no text, no logos, 9:16 vertical`;
+}
+
+async function freepikFluxKontextEdit({ imageBase64, prompt }) {
+  // Freepik Flux Kontext: edit/transform an existing image with a text prompt
+  if (!process.env.FREEPIK_API_KEY) throw new Error('FREEPIK_API_KEY not configured');
+  const body = {
+    prompt,
+    reference_images: [imageBase64],
+    aspect_ratio: 'portrait_9_16'
+  };
+  const r = await fetch(`${FREEPIK_BASE}/ai/flux-kontext`, {
+    method: 'POST',
+    headers: {
+      'x-freepik-api-key': process.env.FREEPIK_API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`Freepik Flux Kontext failed (${r.status}): ${t}`);
+  }
+  const j = await r.json();
+  // Async task pattern
+  const taskId = j?.data?.task_id || j?.task_id;
+  if (taskId) return { taskId, raw: j };
+  // Or sync image data
+  const b64 = j?.data?.[0]?.base64 || j?.data?.image || j?.image;
+  if (b64) return { base64: b64 };
+  throw new Error('Freepik Flux Kontext: unexpected response: ' + JSON.stringify(j).slice(0, 400));
+}
+
+async function pollFreepikTask(taskId, { timeoutMs = 120000, intervalMs = 4000 } = {}) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const r = await fetch(`${FREEPIK_BASE}/ai/flux-kontext/${taskId}`, {
+      headers: { 'x-freepik-api-key': process.env.FREEPIK_API_KEY }
+    });
+    if (r.ok) {
+      const j = await r.json();
+      const data = j?.data || j;
+      const status = String(data?.status || '').toLowerCase();
+      if (status === 'completed' || status === 'success' || status === 'done') {
+        const url = data?.generated?.[0] || data?.images?.[0]?.url || data?.image_url || data?.url;
+        if (url) return { url };
+        const b64 = data?.images?.[0]?.base64 || data?.base64;
+        if (b64) return { base64: b64 };
+        throw new Error('Freepik task completed but no image: ' + JSON.stringify(data).slice(0, 300));
+      }
+      if (status === 'failed' || status === 'error') {
+        throw new Error('Freepik task failed: ' + JSON.stringify(data));
+      }
+    }
+    await new Promise(res => setTimeout(res, intervalMs));
+  }
+  throw new Error('Freepik task timed out after ' + timeoutMs + 'ms');
+}
+
+async function createKlingTask({ prompt, imageUrl, duration }) {
+  const body = {
+    model: 'kling',
+    task_type: 'video_generation',
+    input: {
+      prompt,
+      negative_prompt: 'low quality, distorted, watermark, text, logo, deformed, blurry, extra limbs, ugly face',
+      cfg_scale: 0.5,
+      duration: duration || 5,
+      aspect_ratio: '9:16',
+      image_url: imageUrl,
+      version: '2.1',
+      mode: 'std'
+    },
+    config: { service_mode: '', webhook_config: {} }
+  };
+  const r = await fetch(`${PIAPI_BASE}/task`, {
+    method: 'POST',
+    headers: { 'x-api-key': process.env.PIAPI_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`PiAPI create task failed (${r.status}): ${t}`);
+  }
+  const j = await r.json();
+  const taskId = j?.data?.task_id || j?.task_id;
+  if (!taskId) throw new Error('PiAPI: no task_id: ' + JSON.stringify(j));
+  return taskId;
+}
+
+async function pollKlingTask(taskId, { timeoutMs = 240000, intervalMs = 6000 } = {}) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const r = await fetch(`${PIAPI_BASE}/task/${taskId}`, {
+      headers: { 'x-api-key': process.env.PIAPI_KEY }
+    });
+    if (r.ok) {
+      const j = await r.json();
+      const data = j?.data || j;
+      const status = String(data?.status || '').toLowerCase();
+      if (status === 'completed') {
+        const out = data?.output || {};
+        const url =
+          out.video_url ||
+          out.works?.[0]?.video?.resource ||
+          out.works?.[0]?.video?.resource_without_watermark ||
+          out.url;
+        if (!url) throw new Error('No video url in completed task: ' + JSON.stringify(out));
+        return url;
+      }
+      if (status === 'failed') {
+        throw new Error('Kling task failed: ' + JSON.stringify(data?.error || data));
+      }
+    }
+    await new Promise(res => setTimeout(res, intervalMs));
+  }
+  throw new Error('Kling task timed out after ' + timeoutMs + 'ms');
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!process.env.PIAPI_KEY) return res.status(500).json({ error: 'PIAPI_KEY not configured' });
+  if (!process.env.FREEPIK_API_KEY) return res.status(500).json({ error: 'FREEPIK_API_KEY not configured' });
+
+  try {
+    const body = req.body || {};
+    const imageBase64 = stripDataPrefix(body.imageBase64 || body.image);
+    const imageMime = body.imageMime || 'image/jpeg';
+    const productName = body.productName || 'produto';
+    const productDescription = body.productDescription || '';
+    const marketplace = body.marketplace || 'Mercado Livre';
+    const duration = Math.min(10, Math.max(5, Number(body.duration) || 5));
+
+    if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' });
+
+    // 1. Generate the lifestyle still: person using the product
+    const stillPrompt = await buildInfluencerStillPrompt({ productName, productDescription, marketplace });
+    const stillTask = await freepikFluxKontextEdit({ imageBase64, prompt: stillPrompt });
+    let stillBase64 = stillTask.base64;
+    let stillUrl;
+    if (!stillBase64 && stillTask.taskId) {
+      const polled = await pollFreepikTask(stillTask.taskId);
+      if (polled.url) {
+        stillUrl = polled.url;
+      } else if (polled.base64) {
+        stillBase64 = polled.base64;
+      }
+    }
+    // 2. Make sure we have a public URL for Kling
+    if (!stillUrl) {
+      if (!stillBase64) throw new Error('No still image produced by Freepik');
+      stillUrl = await uploadToTmpfiles(stillBase64, 'image/jpeg');
     }
 
-    var ai = await r.json();
-    var txt = ai.content && ai.content[0] && ai.content[0].text;
-    if (!txt) return res.status(500).json({ error: 'No AI response' });
-
-    var parsed;
-    try {
-      var jsonMatch = txt.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON');
-      parsed = JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      return res.status(500).json({ error: 'Parse error', raw: txt });
-    }
-
-    if (!parsed.mainContent) parsed.mainContent = 'Conteudo nao gerado';
-    if (!parsed.hook) parsed.hook = '';
-    if (!Array.isArray(parsed.hashtags)) parsed.hashtags = [];
-    if (!parsed.cta) parsed.cta = '';
-    if (!Array.isArray(parsed.alternativeVersions)) parsed.alternativeVersions = [];
+    // 3. Animate via Kling
+    const motionPrompt = await buildInfluencerMotionPrompt({ productName });
+    const taskId = await createKlingTask({ prompt: motionPrompt, imageUrl: stillUrl, duration });
+    const videoUrl = await pollKlingTask(taskId);
 
     return res.status(200).json({
       success: true,
-      influencer: {
-        platform: selectedPlatform,
-        tone: selectedTone,
-        mainContent: parsed.mainContent,
-        hook: parsed.hook,
-        hashtags: parsed.hashtags,
-        cta: parsed.cta,
-        alternativeVersions: parsed.alternativeVersions,
-        suggestedVisual: parsed.suggestedVisual || '',
-        bestTimeToPost: parsed.bestTimeToPost || '',
-        estimatedEngagement: parsed.estimatedEngagement || ''
-      }
+      videoUrl,
+      taskId,
+      stillImageUrl: stillUrl,
+      stillPrompt,
+      motionPrompt,
+      duration,
+      aspectRatio: '9:16',
+      provider: 'freepik-flux-kontext + kling-2.1-via-piapi'
     });
-  } catch (error) {
-    return res.status(500).json({ error: 'Server error', message: error.message });
+  } catch (err) {
+    console.error('generate-influencer error:', err);
+    return res.status(500).json({ error: String(err?.message || err) });
   }
 }
