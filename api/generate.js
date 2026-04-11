@@ -145,6 +145,22 @@ Gere TODOS os campos abaixo em formato JSON:
   "horarios_postagem": "melhores horários para postar conteúdo de produto no Brasil"
 }`
   }
+}
+
+// Sanitização: marketplaces que não aceitam emojis em título/descrição
+const EMOJI_FORBIDDEN_MARKETPLACES = new Set(['mercadolivre','amazon','americanas','magalu']);
+function stripEmojis(text) {
+  if (!text || typeof text !== 'string') return text;
+  return text
+    .replace(/[\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F2FF}\u{2600}-\u{27BF}\u{1F900}-\u{1F9FF}]/gu, '')
+    .replace(/[\u2190-\u21FF\u2B00-\u2BFF]/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n[ \t]+/g, '\n')
+    .trim();
+}
+function sanitizeForMarketplace(text, marketplace) {
+  if (!EMOJI_FORBIDDEN_MARKETPLACES.has(marketplace)) return text;
+  return stripEmojis(text);
 };
 
 function formatResultForDisplay(structured, marketplace) {
@@ -370,13 +386,11 @@ export default async function handler(req, res) {
     let mappedListing = null;
     if (structured && typeof structured === 'object') {
       mappedListing = {
-        title: structured.titulo || '',
-        titles: structured.titulo ? [structured.titulo] : [],
-        description: structured.descricao || '',
+        title: sanitizeForMarketplace(structured.titulo || '', marketplace),
+        titles: structured.titulo ? [sanitizeForMarketplace(structured.titulo, marketplace)] : [],
+        description: sanitizeForMarketplace(structured.descricao || '', marketplace),
         keywords: structured.palavras_chave || structured.tags_busca || [],
         category: structured.categoria_sugerida || '',
-        priceRange: structured.preco_sugerido || '',
-        price_range: structured.preco_sugerido || '',
         attributes: structured.ficha_tecnica || structured.atributos || {},
         quality: { score: 85, checks: { seo: true, descricao: true, keywords: true, categoria: true, preco: true } },
         bullet_points: structured.bullet_points || [],
