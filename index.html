@@ -2850,10 +2850,10 @@
                 if (!grid) return;
                 var html = '';
                 scenes.forEach(function(scene, i) {
-                    var isReal = scene.provider === 'photoroom' || scene.provider === 'freepik';
+                    var isReal = !!scene.imageUrl && scene.status !== 'failed';
                     var badge = isReal ? '<span style="position:absolute;top:8px;left:8px;background:#10b981;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">' + (scene.provider === 'freepik' ? 'AI Freepik' : 'AI Photoroom') + '</span>' : '<span style="position:absolute;top:8px;left:8px;background:#6b7280;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;">Fallback</span>';
                     html += '<div style="position:relative;border-radius:12px;overflow:hidden;background:#1a1a2e;box-shadow:0 4px 15px rgba(0,0,0,0.3);">' +
-                        '<img src="' + scene.image + '" alt="' + (scene.name || 'Cenario') + '" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;" loading="lazy" />' +
+                        '<img src="' + scene.imageUrl + '" alt="' + (scene.name || 'Cenario') + '" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;" loading="lazy" />' +
                         badge +
                         '<div style="padding:10px;text-align:center;">' +
                         '<div style="color:#fff;font-weight:600;font-size:14px;margin-bottom:6px;">' + (scene.name || 'Cenario') + '</div>' +
@@ -2941,7 +2941,7 @@
             if (!this.currentScenes || !this.currentScenes[index]) return;
             const scene = this.currentScenes[index];
             const a = document.createElement('a');
-            a.href = scene.image;
+            a.href = scene.imageUrl;
             a.download = 'cenario-' + scene.id + '.jpg';
             document.body.appendChild(a);
             a.click();
@@ -3030,7 +3030,7 @@
                 this.currentScenes.forEach((scene, i) => {
                     setTimeout(() => {
                         const a = document.createElement('a');
-                        a.href = scene.image;
+                        a.href = scene.imageUrl;
                         a.download = 'cenario-' + scene.id + '.jpg';
                         document.body.appendChild(a);
                         a.click();
