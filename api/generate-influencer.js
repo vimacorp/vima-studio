@@ -73,12 +73,13 @@ async function buildInfluencerMotionPrompt({ productName }) {
 async function freepikFluxKontextEdit({ imageBase64, prompt }) {
   // Freepik Flux Kontext: edit/transform an existing image with a text prompt
   if (!process.env.FREEPIK_API_KEY) throw new Error('FREEPIK_API_KEY not configured');
+  const inputImageUrl = await uploadToTmpfiles(imageBase64, 'image/jpeg');
   const body = {
     prompt,
-    reference_images: [imageBase64],
-    aspect_ratio: 'portrait_9_16'
+    input_image: inputImageUrl,
+    aspect_ratio: 'social_story_9_16'
   };
-  const r = await fetch(`${FREEPIK_BASE}/ai/flux-kontext`, {
+  const r = await fetch(`${FREEPIK_BASE}/ai/text-to-image/flux-kontext-pro`, {
     method: 'POST',
     headers: {
       'x-freepik-api-key': process.env.FREEPIK_API_KEY,
@@ -103,7 +104,7 @@ async function freepikFluxKontextEdit({ imageBase64, prompt }) {
 async function pollFreepikTask(taskId, { timeoutMs = 120000, intervalMs = 4000 } = {}) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
-    const r = await fetch(`${FREEPIK_BASE}/ai/flux-kontext/${taskId}`, {
+    const r = await fetch(`${FREEPIK_BASE}/ai/text-to-image/flux-kontext-pro/${taskId}`, {
       headers: { 'x-freepik-api-key': process.env.FREEPIK_API_KEY }
     });
     if (r.ok) {
