@@ -1,101 +1,152 @@
-var SYSTEM_PROMPT = 'Voce e um expert em criacao de scripts para videos comerciais de produtos em marketplaces brasileiros. Seu trabalho e gerar scripts estruturados para videos verticais de 30 segundos que sao altamente persuasivos e seguem uma estrutura de vendas comprovada. Voce DEVE retornar APENAS um JSON valido, sem explicacoes adicionais. A estrutura deve ter exatamente 6 cenas seguindo esta ordem: 1-Hook (gancho de atencao), 2-Benefit (principal beneficio), 3-Feature (funcionalidade destaque), 4-Social Proof (confianca), 5-Urgency (urgencia), 6-CTA (call-to-action). Cada cena DEVE ter: text (max 6 palavras impactantes), subtext (uma frase de suporte), duration (4-6 segundos), layout (um de: product-center, product-left-text-right, product-right-text-left, zoom-product, split-before-after, fullscreen-text), animation (um de: fade-in, zoom-in, slide-left, slide-right, pulse, reveal), bgColor (gradiente CSS profissional ex: linear-gradient(135deg, #1a1a2e, #16213e)), textColor (cor hex), category (um de: hook, benefit, feature, social-proof, urgency, cta). Use cores escuras e profissionais nos gradientes. O texto deve ser em portugues brasileiro, persuasivo e direto. A soma das duracoes deve dar aproximadamente 30 segundos.';
+// api/generate-video.js
+// VIMA STUDIO - Real product demo video via Kling 2.1 (PiAPI)
+// Pipeline: product image -> tmpfiles host -> Claude prompt -> Kling i2v -> hosted MP4 URL
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+export const config = { maxDuration: 300 };
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+const PIAPI_BASE = 'https://api.piapi.ai/api/v1';
 
+function stripDataPrefix(b64) {
+  return String(b64 || '').replace(/^data:image\/[^;]+;base64,/, '');
+}
+
+async function uploadToTmpfiles(base64, mime) {
+  const buffer = Buffer.from(base64, 'base64');
+  const ext = (mime || 'image/jpeg').split('/')[1] || 'jpg';
+  const blob = new Blob([buffer], { type: mime || 'image/jpeg' });
+  const fd = new FormData();
+  fd.append('file', blob, `vima-${Date.now()}.${ext}`);
+  const r = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: fd });
+  if (!r.ok) throw new Error(`tmpfiles upload failed: HTTP ${r.status}`);
+  const j = await r.json();
+  const url = j?.data?.url;
+  if (!url) throw new Error('tmpfiles: no url in response: ' + JSON.stringify(j));
+  // tmpfiles returns viewer URL; direct download = inject /dl/
+  return url.replace('https://tmpfiles.org/', 'https://tmpfiles.org/dl/');
+}
+
+async function buildDemoPrompt({ productName, productDescription, marketplace }) {
+  const sys = 'You generate a single short cinematic prompt for an image-to-video model (Kling 2.1). The prompt describes natural product motion and camera movement that demonstrates the product in real use. RULES: no text overlays, no logos, no human faces, no hands holding the product unless natural, single paragraph, <80 words, English, premium commercial style.';
+  const user = `Product: ${productName}\nDescription: ${productDescription || '(none)'}\nMarketplace: ${marketplace || 'Mercado Livre'}\n\nWrite ONE cinematic camera+motion prompt that demonstrates this product visually. Output only the prompt, no preamble.`;
   try {
-    var body = req.body;
-    var title = body.title || 'Produto';
-    var marketplace = body.marketplace || 'Mercado Livre';
-
-    console.log('[Video] Generating script for: ' + title + ' on ' + marketplace);
-
-    var userPrompt = 'Gere um script de video comercial vertical de 30 segundos para este produto:\n\n' +
-      'Titulo: ' + title + '\n' +
-      'Marketplace: ' + marketplace + '\n\n' +
-      'IMPORTANTE: O video mostrara a foto REAL do produto em TODAS as cenas. O frontend vai renderizar a imagem do produto no layout especificado. Entao os textos devem complementar a imagem, nao descreve-la.\n\n' +
-      'Retorne APENAS o JSON com esta estrutura:\n' +
-      '{\n' +
-      '  "scenes": [\n' +
-      '    {\n' +
-      '      "text": "string (max 6 palavras)",\n' +
-      '      "subtext": "string (uma frase)",\n' +
-      '      "duration": number,\n' +
-      '      "layout": "string",\n' +
-      '      "animation": "string",\n' +
-      '      "bgColor": "string (CSS gradient)",\n' +
-      '      "textColor": "string (hex)",\n' +
-      '      "category": "string"\n' +
-      '    }\n' +
-      '  ],\n' +
-      '  "narration": "string (script completo de narracao em portugues)"\n' +
-      '}';
-
-    var apiResponse = await fetch('https://api.anthropic.com/v1/messages', {
+    if (!process.env.ANTHROPIC_API_KEY) throw new Error('no anthropic key');
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userPrompt }]
+        max_tokens: 400,
+        system: sys,
+        messages: [{ role: 'user', content: user }]
       })
     });
-
-    if (!apiResponse.ok) {
-      var errText = await apiResponse.text();
-      console.log('[Video] Claude API error: ' + apiResponse.status + ' - ' + errText.substring(0, 200));
-      throw new Error('Claude API ' + apiResponse.status);
+    if (r.ok) {
+      const j = await r.json();
+      const text = j?.content?.[0]?.text?.trim();
+      if (text) return text.replace(/^["']|["']$/g, '');
     }
+  } catch (e) {
+    console.warn('buildDemoPrompt fallback:', e?.message || e);
+  }
+  return `Slow cinematic dolly-in shot of ${productName}, soft natural lighting, subtle ambient motion, product centered, premium commercial style, smooth camera movement, ultra detailed, 9:16 vertical`;
+}
 
-    var data = await apiResponse.json();
-    var responseText = data.content && data.content[0] && data.content[0].text ? data.content[0].text : '';
+async function createKlingTask({ prompt, imageUrl, duration }) {
+  const body = {
+    model: 'kling',
+    task_type: 'video_generation',
+    input: {
+      prompt,
+      negative_prompt: 'low quality, distorted, watermark, text, logo, deformed product, blurry, extra limbs',
+      cfg_scale: 0.5,
+      duration: duration || 5,
+      aspect_ratio: '9:16',
+      image_url: imageUrl,
+      version: '2.1',
+      mode: 'std'
+    },
+    config: { service_mode: '', webhook_config: {} }
+  };
+  const r = await fetch(`${PIAPI_BASE}/task`, {
+    method: 'POST',
+    headers: { 'x-api-key': process.env.PIAPI_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`PiAPI create task failed (${r.status}): ${t}`);
+  }
+  const j = await r.json();
+  const taskId = j?.data?.task_id || j?.task_id;
+  if (!taskId) throw new Error('PiAPI: no task_id: ' + JSON.stringify(j));
+  return taskId;
+}
 
-    console.log('[Video] Claude response length: ' + responseText.length);
-
-    // Extract JSON from response
-    var jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('No JSON in Claude response');
-
-    var scriptData = JSON.parse(jsonMatch[0]);
-
-    if (!scriptData.scenes || !Array.isArray(scriptData.scenes)) {
-      throw new Error('Invalid scenes structure');
+async function pollKlingTask(taskId, { timeoutMs = 270000, intervalMs = 6000 } = {}) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const r = await fetch(`${PIAPI_BASE}/task/${taskId}`, {
+      headers: { 'x-api-key': process.env.PIAPI_KEY }
+    });
+    if (r.ok) {
+      const j = await r.json();
+      const data = j?.data || j;
+      const status = String(data?.status || '').toLowerCase();
+      if (status === 'completed') {
+        const out = data?.output || {};
+        const url =
+          out.video_url ||
+          out.works?.[0]?.video?.resource ||
+          out.works?.[0]?.video?.resource_without_watermark ||
+          out.url;
+        if (!url) throw new Error('No video url in completed task: ' + JSON.stringify(out));
+        return url;
+      }
+      if (status === 'failed') {
+        throw new Error('Kling task failed: ' + JSON.stringify(data?.error || data));
+      }
     }
+    await new Promise(res => setTimeout(res, intervalMs));
+  }
+  throw new Error('Kling task timed out after ' + timeoutMs + 'ms');
+}
 
-    // Ensure exactly 6 scenes
-    var scenes = scriptData.scenes.slice(0, 6);
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!process.env.PIAPI_KEY) return res.status(500).json({ error: 'PIAPI_KEY not configured in Vercel env' });
 
-    // Calculate total duration
-    var totalDuration = 0;
-    for (var i = 0; i < scenes.length; i++) {
-      totalDuration += scenes[i].duration || 5;
-    }
+  try {
+    const body = req.body || {};
+    const imageBase64 = stripDataPrefix(body.imageBase64 || body.image);
+    const imageMime = body.imageMime || 'image/jpeg';
+    const productName = body.productName || 'produto';
+    const productDescription = body.productDescription || '';
+    const marketplace = body.marketplace || 'Mercado Livre';
+    const duration = Math.min(10, Math.max(5, Number(body.duration) || 5));
 
-    console.log('[Video] Generated ' + scenes.length + ' scenes, total ' + totalDuration + 's');
+    if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' });
+
+    const imageUrl = await uploadToTmpfiles(imageBase64, imageMime);
+    const prompt = await buildDemoPrompt({ productName, productDescription, marketplace });
+    const taskId = await createKlingTask({ prompt, imageUrl, duration });
+    const videoUrl = await pollKlingTask(taskId);
 
     return res.status(200).json({
       success: true,
-      video: {
-        scenes: scenes,
-        narration: scriptData.narration || '',
-        totalDuration: totalDuration,
-        format: 'vertical',
-        resolution: '1080x1920'
-      }
+      videoUrl,
+      taskId,
+      prompt,
+      sourceImageUrl: imageUrl,
+      duration,
+      aspectRatio: '9:16',
+      provider: 'kling-2.1-via-piapi'
     });
-
   } catch (err) {
-    console.log('[Video] Error: ' + err.message);
-    return res.status(500).json({ success: false, error: err.message });
+    console.error('generate-video error:', err);
+    return res.status(500).json({ error: String(err?.message || err) });
   }
 }
