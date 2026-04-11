@@ -2241,8 +2241,8 @@
                     var data = await response.json();
                     if (!data.success) throw new Error(data.error || "Erro na geracao");
                     this.currentListing.video = data.video;
-                    this.displayVideoPreview(data.video);
-                    this.showToast("Roteiro de video gerado!", "success");
+                    this.displayVideoPreview(data);
+                    this.showToast("Video gerado com sucesso!", "success");
             this.updateDownloadHub();
                 } catch (error) {
                     this.showToast("Erro ao gerar video: " + error.message, "error");
@@ -2251,7 +2251,7 @@
                 }
             }
 
-            displayVideoPreview(video) {
+            displayVideoPreview(video) { if (video && video.videoUrl) { var __s = document.getElementById("videoSection"); if (__s) { __s.style.display = "block"; __s.innerHTML = '<div style="padding:20px;"><h3 style="color:#fff;margin-bottom:12px;">Video Gerado - Kling 2.1 AI</h3><video src="' + video.videoUrl + '" controls autoplay loop playsinline style="width:100%;max-width:480px;border-radius:12px;display:block;margin:0 auto;"></video><p style="text-align:center;color:#4ade80;margin-top:10px;font-size:13px;">Gerado por Kling 2.1 via PiAPI</p></div>'; } return; }
                 var section = document.getElementById("videoSection");
                 if (section) section.style.display = "block";
                 var container = document.getElementById("videoContent");
@@ -2505,14 +2505,14 @@
                 var data = await response.json();
                 if (!data.success) throw new Error(data.error || 'Erro ao gerar conteudo');
                 this.currentInfluencer = data.influencer;
-                this.displayInfluencer(data.influencer);
+                this.displayInfluencer(data);
             } catch (err) {
                 resultDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">Erro: ' + err.message + '</div>';
             }
         }
 
 
-        displayInfluencer(inf) {
+        displayInfluencer(inf) { if (inf && inf.videoUrl) { var __r = document.getElementById('influencerResult'); if (__r) { __r.style.display = 'block'; __r.innerHTML = '<div style="padding:20px;"><h3 style="color:#fff;margin-bottom:12px;">IA Influencer - Video Gerado</h3><video src="' + inf.videoUrl + '" controls autoplay loop playsinline style="width:100%;max-width:480px;border-radius:12px;display:block;margin:0 auto;"></video>' + (inf.stillImageUrl ? '<p style="text-align:center;color:#888;margin-top:8px;font-size:12px;">Still inicial: Freepik Flux Kontext</p>' : '') + '<p style="text-align:center;color:#4ade80;margin-top:8px;font-size:13px;">Flux Kontext + Kling 2.1 via PiAPI</p></div>'; } return; }
             var resultDiv = document.getElementById('influencerResult');
             var h = '';
             if (inf.hook) {
