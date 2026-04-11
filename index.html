@@ -2236,7 +2236,7 @@
                     var response = await fetch("/api/generate-video", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ listing: listing })
+                        body: JSON.stringify({ listing: listing, imageBase64: this.currentListing.imageBase64 })
                     });
                     var data = await response.json();
                     if (!data.success) throw new Error(data.error || "Erro na geracao");
@@ -2500,7 +2500,7 @@
                 var response = await fetch('/api/generate-influencer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ listing: this.currentListing, platform: platform, tone: tone })
+                    body: JSON.stringify({ listing: this.currentListing.result, imageBase64: this.currentListing.imageBase64, platform: platform, tone: tone })
                 });
                 var data = await response.json();
                 if (!data.success) throw new Error(data.error || 'Erro ao gerar conteudo');
@@ -2829,7 +2829,7 @@
                 const response = await fetch('/api/generate-scenes-v2', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: this.currentListing.imageBase64 })
+                    body: JSON.stringify({ imageBase64: this.currentListing.imageBase64, listing: this.currentListing.result })
                 });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'Erro ao gerar cen\u00e1rios');
