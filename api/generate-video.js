@@ -1,6 +1,6 @@
 // api/generate-video.js
-// VIMA STUDIO - Real product demo video via Kling 2.1 (PiAPI)
-// Pipeline: product image -> tmpfiles host -> Claude prompt -> Kling i2v -> hosted MP4 URL
+// VIMA STUDIO - Video comercial multi-cena (30s) narrado via Kling 2.1 (PiAPI)
+// Pipeline: product image -> tmpfiles host -> Claude storyboard (6 cenas + narração) -> Kling i2v paralelo -> playlist {videoUrl, narration}
 
 export const config = { maxDuration: 300 };
 
@@ -11,9 +11,10 @@ function stripDataPrefix(b64) {
 }
 
 async function uploadToTmpfiles(base64, mime) {
-  const buffer = Buffer.from(base64, 'base64');
-  const ext = (mime || 'image/jpeg').split('/')[1] || 'jpg';
-  const blob = new Blob([buffer], { type: mime || 'image/jpeg' });
+  const clean = stripDataPrefix(base64);
+  const buf = Buffer.from(clean, 'base64');
+  const ext = (mime && mime.split('/')[1]) || 'png';
+  const blob = new Blob([buf], { type: mime || 'image/png' });
   const fd = new FormData();
   fd.append('file', blob, `vima-${Date.now()}.${ext}`);
   const r = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: fd });
@@ -21,15 +22,41 @@ async function uploadToTmpfiles(base64, mime) {
   const j = await r.json();
   const url = j?.data?.url;
   if (!url) throw new Error('tmpfiles: no url in response: ' + JSON.stringify(j));
-  // tmpfiles returns viewer URL; direct download = inject /dl/
   return url.replace(/^https?:\/\/tmpfiles\.org\//, 'https://tmpfiles.org/dl/');
 }
 
-async function buildDemoPrompt({ productName, productDescription, marketplace }) {
-  const sys = 'You generate a single short cinematic prompt for an image-to-video model (Kling 2.1). The prompt describes natural product motion and camera movement that demonstrates the product in real use. RULES: no text overlays, no logos, no human faces, no hands holding the product unless natural, single paragraph, <80 words, English, premium commercial style.';
-  const user = `Product: ${productName}\nDescription: ${productDescription || '(none)'}\nMarketplace: ${marketplace || 'Mercado Livre'}\n\nWrite ONE cinematic camera+motion prompt that demonstrates this product visually. Output only the prompt, no preamble.`;
+async function buildStoryboard({ productName, productDescription, marketplace }) {
+  const sys = 'Voce cria storyboards curtos para videos comerciais de e-commerce. Responda APENAS com JSON valido, sem markdown.';
+  const user = `Produto: ${productName}
+Descricao: ${productDescription || '(sem descricao)'}
+Marketplace: ${marketplace || 'Mercado Livre'}
+
+Crie um storyboard de 6 cenas (cada cena tem 5 segundos de video = 30 segundos no total) para um video de vendas persuasivo.
+Cada cena deve ter:
+- "prompt": prompt cinematografico curto em ingles para Kling 2.1 image-to-video (camera, iluminacao, movimento, ambientacao). O produto DEVE ser identico a imagem de referencia. Sem texto, sem logos, sem deformacoes.
+- "narration": texto de narracao em portugues brasileiro (MAXIMO 13 palavras por cena, ~5 segundos falado).
+
+Estrutura persuasiva:
+Cena 1 - HOOK (quebra o scroll, produto em destaque)
+Cena 2 - PROBLEMA (contexto do uso, dor que resolve)
+Cena 3 - SOLUCAO (produto em acao)
+Cena 4 - BENEFICIO (resultado visivel)
+Cena 5 - PROVA (detalhes premium, qualidade)
+Cena 6 - CTA (fechamento emocional com produto)
+
+Responda APENAS o JSON: {"scenes":[{"prompt":"...","narration":"..."},...6 cenas]}`;
+
+  const fallback = [
+    { prompt: `Slow dolly-in on ${productName}, soft studio lighting, product centered, premium commercial style`, narration: `Conheca o ${productName}.` },
+    { prompt: `Top-down reveal of ${productName} in everyday context, natural daylight`, narration: 'Feito para o seu dia a dia.' },
+    { prompt: `Close-up hand interacting with ${productName}, shallow depth of field`, narration: 'Pratico e facil de usar.' },
+    { prompt: `Wide shot showing ${productName} in use, cinematic lighting`, narration: 'Resultado que voce sente na hora.' },
+    { prompt: `Macro detail of ${productName} material and finish, premium quality`, narration: 'Qualidade premium em cada detalhe.' },
+    { prompt: `Hero shot of ${productName}, warm golden hour light, emotional close-up`, narration: 'Garanta o seu agora.' }
+  ];
+
   try {
-    if (!process.env.ANTHROPIC_API_KEY) throw new Error('no anthropic key');
+    if (!process.env.ANTHROPIC_API_KEY) return fallback;
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -39,20 +66,27 @@ async function buildDemoPrompt({ productName, productDescription, marketplace })
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 400,
+        max_tokens: 1500,
         system: sys,
         messages: [{ role: 'user', content: user }]
       })
     });
-    if (r.ok) {
-      const j = await r.json();
-      const text = j?.content?.[0]?.text?.trim();
-      if (text) return text.replace(/^["']|["']$/g, '');
+    if (!r.ok) return fallback;
+    const j = await r.json();
+    const text = j?.content?.[0]?.text || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return fallback;
+    const parsed = JSON.parse(match[0]);
+    if (Array.isArray(parsed?.scenes) && parsed.scenes.length >= 4) {
+      return parsed.scenes.slice(0, 6).map(s => ({
+        prompt: String(s.prompt || '').slice(0, 500),
+        narration: String(s.narration || '').slice(0, 180)
+      }));
     }
   } catch (e) {
-    console.warn('buildDemoPrompt fallback:', e?.message || e);
+    console.warn('buildStoryboard fallback:', e?.message || e);
   }
-  return `Slow cinematic dolly-in shot of ${productName}, soft natural lighting, subtle ambient motion, product centered, premium commercial style, smooth camera movement, ultra detailed, 9:16 vertical`;
+  return fallback;
 }
 
 async function createKlingTask({ prompt, imageUrl, duration }) {
@@ -61,7 +95,7 @@ async function createKlingTask({ prompt, imageUrl, duration }) {
     task_type: 'video_generation',
     input: {
       prompt,
-      negative_prompt: 'low quality, distorted, watermark, text, logo, deformed product, blurry, extra limbs',
+      negative_prompt: 'low quality, distorted, watermark, text, logo, deformed product, blurry, extra limbs, brand change',
       cfg_scale: 0.5,
       duration: duration || 5,
       aspect_ratio: '9:16',
@@ -86,7 +120,7 @@ async function createKlingTask({ prompt, imageUrl, duration }) {
   return taskId;
 }
 
-async function pollKlingTask(taskId, { timeoutMs = 270000, intervalMs = 6000 } = {}) {
+async function pollKlingTask(taskId, { timeoutMs = 260000, intervalMs = 6000 } = {}) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     const r = await fetch(`${PIAPI_BASE}/task/${taskId}`, {
@@ -95,9 +129,9 @@ async function pollKlingTask(taskId, { timeoutMs = 270000, intervalMs = 6000 } =
     if (r.ok) {
       const j = await r.json();
       const data = j?.data || j;
-      const status = String(data?.status || '').toLowerCase();
+      const status = data?.status;
       if (status === 'completed') {
-        const out = data?.output || {};
+        const out = data.output || {};
         const url =
           out.video_url ||
           out.works?.[0]?.video?.resource ||
@@ -110,7 +144,7 @@ async function pollKlingTask(taskId, { timeoutMs = 270000, intervalMs = 6000 } =
         throw new Error('Kling task failed: ' + JSON.stringify(data?.error || data));
       }
     }
-    await new Promise(res => setTimeout(res, intervalMs));
+    await new Promise(r => setTimeout(r, intervalMs));
   }
   throw new Error('Kling task timed out after ' + timeoutMs + 'ms');
 }
@@ -120,30 +154,41 @@ export default async function handler(req, res) {
   if (!process.env.PIAPI_KEY) return res.status(500).json({ error: 'PIAPI_KEY not configured in Vercel env' });
 
   try {
-    const body = req.body || {};
-    const imageBase64 = stripDataPrefix(body.imageBase64 || body.image);
-    const imageMime = body.imageMime || 'image/jpeg';
-    const productName = body.productName || 'produto';
-    const productDescription = body.productDescription || '';
-    const marketplace = body.marketplace || 'Mercado Livre';
-    const duration = Math.min(10, Math.max(5, Number(body.duration) || 5));
-
+    const { imageBase64, listing, marketplace } = req.body || {};
     if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' });
 
-    const imageUrl = await uploadToTmpfiles(imageBase64, imageMime);
-    const prompt = await buildDemoPrompt({ productName, productDescription, marketplace });
-    const taskId = await createKlingTask({ prompt, imageUrl, duration });
-    const videoUrl = await pollKlingTask(taskId);
+    const productName = listing?.title || listing?.productName || 'produto';
+    const productDescription = listing?.description || listing?.bullets?.join?.('. ') || '';
+
+    const imageUrl = await uploadToTmpfiles(imageBase64, 'image/png');
+    const storyboard = await buildStoryboard({ productName, productDescription, marketplace });
+
+    // Paralelizar criacao e polling das 6 cenas para caber em 300s
+    const scenePromises = storyboard.map(async (scene, idx) => {
+      try {
+        const taskId = await createKlingTask({ prompt: scene.prompt, imageUrl, duration: 5 });
+        const videoUrl = await pollKlingTask(taskId);
+        return { idx, videoUrl, prompt: scene.prompt, narration: scene.narration, duration: 5 };
+      } catch (e) {
+        console.error(`Cena ${idx+1} falhou:`, e?.message || e);
+        return { idx, error: String(e?.message || e), prompt: scene.prompt, narration: scene.narration, duration: 5 };
+      }
+    });
+
+    const results = await Promise.all(scenePromises);
+    const ok = results.filter(r => r.videoUrl);
+    if (ok.length === 0) {
+      return res.status(500).json({ error: 'Todas as cenas falharam', details: results });
+    }
 
     return res.status(200).json({
       success: true,
-      videoUrl,
-      taskId,
-      prompt,
+      scenes: results.sort((a,b)=>a.idx-b.idx),
+      totalDuration: ok.length * 5,
       sourceImageUrl: imageUrl,
-      duration,
-      aspectRatio: '9:16',
-      provider: 'kling-2.1-via-piapi'
+      productName,
+      provider: 'kling-2.1-via-piapi',
+      sceneCount: ok.length
     });
   } catch (err) {
     console.error('generate-video error:', err);
