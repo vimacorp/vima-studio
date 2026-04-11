@@ -2159,6 +2159,7 @@
                   h += '</div></div>';
                 }
                       h += '<div class="action-buttons">';
+            h += '<button class="btn-action btn-carrossel" onclick="app.generateCarrossel()">Gerar Carrossel Neuromarketing</button>';
             h += '<button class="btn-action btn-images" onclick="app.generateImages()">&#x1F5BC; Gerar Imagens</button>';
             h += '<button class="btn-action btn-removebg" onclick="app.removeBg()">&#x2702; Remover Fundo</button>';
             h += '<button class="btn-action btn-video" onclick="app.generateVideo()">&#x1F3AC; Gerar Video</button>';
@@ -2171,6 +2172,56 @@
             }
 
 
+
+            async generateCarrossel() {
+                if (!this.currentListing || !this.currentListing.result) { alert('Gere o anuncio primeiro'); return; }
+                const btn = document.querySelector('.btn-carrossel');
+                const orig = btn ? btn.innerHTML : '';
+                if (btn) { btn.disabled = true; btn.innerHTML = 'Gerando carrossel...'; }
+                try {
+                    let b64 = this.currentListing.photo || '';
+                    if (b64.indexOf(',') > -1) b64 = b64.split(',')[1];
+                    const mk = this.currentListing.marketplace || 'mercadolivre';
+                    const resp = await fetch('/api/generate-carrossel', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ imageBase64: b64, listing: this.currentListing.result, marketplace: mk })
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.error || 'Falha no carrossel');
+                    this.renderCarrossel(data);
+                } catch (e) {
+                    alert('Erro: ' + e.message);
+                } finally {
+                    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+                }
+            }
+
+            renderCarrossel(data) {
+                let c = document.getElementById('carrosselResult');
+                if (!c) {
+                    c = document.createElement('div');
+                    c.id = 'carrosselResult';
+                    c.style.cssText = 'padding:2rem;max-width:1200px;margin:2rem auto;';
+                    (document.getElementById('resultScreen') || document.body).appendChild(c);
+                }
+                let h = '<h2 style="color:var(--accent);margin-bottom:1rem;">Carrossel Neuromarketing (' + (data.marketplace || '') + ')</h2>';
+                h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;">';
+                (data.scenes || []).forEach(function(s, i) {
+                    h += '<div style="background:var(--gray-900);border:1px solid var(--gray-700);border-radius:12px;overflow:hidden;">';
+                    h += '<div style="padding:0.75rem;color:var(--accent);font-weight:600;">' + (i+1) + '. ' + (s.label || s.role) + '</div>';
+                    if (s.imageUrl) {
+                        h += '<img src="' + s.imageUrl + '" style="width:100%;display:block;" />';
+                        h += '<a href="' + s.imageUrl + '" target="_blank" style="display:block;padding:0.5rem;text-align:center;color:var(--gray-300);font-size:0.8rem;">Abrir</a>';
+                    } else {
+                        h += '<div style="padding:1rem;color:#ef4444;font-size:0.8rem;">' + (s.error || 'sem imagem') + '</div>';
+                    }
+                    h += '</div>';
+                });
+                h += '</div>';
+                c.innerHTML = h;
+                c.scrollIntoView({ behavior: 'smooth' });
+            }
 
             async generateImages() {
                 var ib = this.currentListing.imageBase64;
