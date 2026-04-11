@@ -2053,6 +2053,7 @@
 
             async generateListing() {
                 const marketplace = document.getElementById('marketplaceSelect').value;
+                this.currentListing.marketplace = marketplace;
 
                 if (!this.currentListing.photo || !marketplace) {
                     this.showToast('Por favor, carregue uma foto e selecione um marketplace', 'error');
@@ -2111,7 +2112,6 @@
                 var desc = listing.description || "";
                 var kw = listing.keywords || "";
                 var cat = listing.category || "";
-                var price = listing.priceRange || listing.price_range || "";
                 var attr = listing.attributes || {};
                 var qual = listing.quality || { score: 70, checks: {} };
                 var scoreColor = qual.score >= 80 ? "#4ade80" : qual.score >= 60 ? "#fbbf24" : "#f87171";
@@ -2612,7 +2612,6 @@
                     description: this.currentListing.result.description,
                     keywords: this.currentListing.result.keywords,
                     category: this.currentListing.result.category,
-                    priceRange: this.currentListing.result.priceRange,
                     marketplace: marketplace,
                     createdAt: new Date().toISOString()
                 };
@@ -2698,7 +2697,7 @@
                 document.getElementById('resultDescription').textContent = listing.description;
                 document.getElementById('resultKeywords').textContent = listing.keywords;
                 document.getElementById('resultCategory').textContent = listing.category;
-                document.getElementById('resultPrice').textContent = listing.priceRange;
+                var __pr = document.getElementById('resultPrice'); if (__pr && __pr.closest('.result-field')) __pr.closest('.result-field').style.display = 'none';
                 document.getElementById('marketplaceSelect').value = listing.marketplace;
 
                 document.getElementById('resultsSection').classList.add('active');
