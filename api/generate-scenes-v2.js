@@ -46,6 +46,7 @@ export default async function handler(req, res) {
           return 'image/jpeg';
         };
         const imageMime = body.imageMime || detectMimeFromBase64(imageBase64);
+    const _cleanImageBase64 = String(imageBase64 || '').replace(/^data:image\/[^;]+;base64,/, '');
     const productName = body.productName || '';
     const productDescription = body.productDescription || '';
     const pkg = body.package || 'LITE';
@@ -56,7 +57,7 @@ export default async function handler(req, res) {
     }
 
     const ctx = createContext({
-      imageBase64,
+      imageBase64: _cleanImageBase64,
       imageMime,
       productName,
       productDescription,
