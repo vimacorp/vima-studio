@@ -26,7 +26,7 @@ async function uploadToTmpfiles(base64, mime) {
   const j = await r.json();
   const url = j?.data?.url;
   if (!url) throw new Error('tmpfiles: no url in response: ' + JSON.stringify(j));
-  return url.replace('https://tmpfiles.org/', 'https://tmpfiles.org/dl/');
+  return url.replace(/^https?:\/\/tmpfiles\.org\//, 'https://tmpfiles.org/dl/');
 }
 
 async function fetchAsBase64(url) {
