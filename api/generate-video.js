@@ -22,7 +22,7 @@ async function uploadToTmpfiles(base64, mime) {
   const url = j?.data?.url;
   if (!url) throw new Error('tmpfiles: no url in response: ' + JSON.stringify(j));
   // tmpfiles returns viewer URL; direct download = inject /dl/
-  return url.replace('https://tmpfiles.org/', 'https://tmpfiles.org/dl/');
+  return url.replace(/^https?:\/\/tmpfiles\.org\//, 'https://tmpfiles.org/dl/');
 }
 
 async function buildDemoPrompt({ productName, productDescription, marketplace }) {
