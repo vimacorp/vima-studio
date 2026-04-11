@@ -1,9 +1,14 @@
 // api/generate-carrossel.js
-// Gera carrossel de CRIATIVOS (artes) de marketplace com neuromarketing aplicado.
-// Usa Freepik Flux Kontext Pro (text-to-image com renderizacao de texto em PT-BR).
-// Cada cena tem: contexto visual detalhado + overlay de texto (hook/CTA/beneficio).
-// Apenas 1 cena tem fundo branco puro (a cena "produto_limpo"). As demais sao
-// ambientadas em cenarios reais de uso.
+// Pipeline 100% dinamico, vision-first:
+//   1. Chama /api/build-creative-brief com a foto + listing (Claude Sonnet 4 olha
+//      a imagem e retorna 6 angulos criativos especificos pro produto).
+//   2. Para cada angulo, gera a CENA via Flux Kontext Pro (text-to-image, sem
+//      input_image, sem upload externo, sem renderizar texto na imagem).
+//   3. Compoe copy_overlay (e cta_overlay no angulo 6) por cima usando Sharp+SVG.
+//   4. Retorna 6 imagens como data URLs JPEG.
+// ZERO hardcode de produto, copy ou nicho.
+
+import sharp from 'sharp';
 
 export const config = { maxDuration: 300 };
 
@@ -11,273 +16,247 @@ const FREEPIK_API_KEY = process.env.FREEPIK_API_KEY;
 const FREEPIK_ENDPOINT = 'https://api.freepik.com/v1/ai/text-to-image/flux-kontext-pro';
 
 const MARKETPLACE_ASPECT = {
-    mercado_livre: 'square_1_1',
-    amazon:        'square_1_1',
-    shopee:        'square_1_1',
-    magalu:        'square_1_1',
-    shein:         'square_1_1',
-    tiktok_shop:   'traditional_3_4',
-    instagram:     'square_1_1',
-    default:       'square_1_1'
+  mercado_livre: 'square_1_1',
+  amazon:        'square_1_1',
+  shopee:        'square_1_1',
+  magalu:        'square_1_1',
+  shein:         'square_1_1',
+  tiktok_shop:   'traditional_3_4',
+  instagram:     'square_1_1',
+  default:       'square_1_1'
 };
 
 // ---------- helpers ----------
-function clean(str, max) {
-    if (!str) return '';
-    var s = String(str).replace(/\s+/g, ' ').trim();
-    return max ? s.substring(0, max) : s;
+function escapeXml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
-function shortTitle(listing) {
-    var t = clean(listing && (listing.titulo || listing.title || listing.produto), 60);
-    return t || 'produto';
+function wrapText(text, maxCharsPerLine) {
+  const words = String(text || '').trim().split(/\s+/);
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    if (!cur.length) { cur = w; continue; }
+    if ((cur + ' ' + w).length <= maxCharsPerLine) cur = cur + ' ' + w;
+    else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  return lines;
 }
 
-function topBenefits(listing, n) {
-    var arr = [];
-    if (listing && Array.isArray(listing.beneficios)) arr = listing.beneficios;
-    else if (listing && Array.isArray(listing.bullets)) arr = listing.bullets;
-    else if (listing && Array.isArray(listing.features)) arr = listing.features;
-    else if (listing && typeof listing.descricao === 'string') {
-        arr = listing.descricao.split(/[.;\n]/).filter(function(s){return s.trim().length>8;});
+// ---------- brief fetch (self-call) ----------
+async function fetchBrief(req, imageBase64, listing, descricaoTecnica) {
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const url = proto + '://' + host + '/api/build-creative-brief';
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageBase64, listing, descricaoTecnica })
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error('build-creative-brief ' + r.status + ': ' + t.substring(0, 300));
+  }
+  const j = await r.json();
+  if (!j || !j.brief || !Array.isArray(j.brief.angulos_criativos)) {
+    throw new Error('brief invalid: missing angulos_criativos');
+  }
+  return j.brief;
+}
+
+// ---------- Flux Kontext Pro (text-to-image, sem input_image) ----------
+async function generateImageFromPrompt(prompt, aspect) {
+  const body = { prompt, aspect_ratio: aspect };
+  const createResp = await fetch(FREEPIK_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-freepik-api-key': FREEPIK_API_KEY
+    },
+    body: JSON.stringify(body)
+  });
+  if (!createResp.ok) {
+    const err = await createResp.text();
+    throw new Error('Freepik create ' + createResp.status + ': ' + err.substring(0, 300));
+  }
+  const created = await createResp.json();
+  const taskId = created && created.data && created.data.task_id;
+  if (!taskId) throw new Error('Freepik: missing task_id');
+
+  const pollUrl = FREEPIK_ENDPOINT + '/' + taskId;
+  for (let i = 0; i < 50; i++) {
+    await new Promise(r => setTimeout(r, 2500));
+    const p = await fetch(pollUrl, { headers: { 'x-freepik-api-key': FREEPIK_API_KEY } });
+    if (!p.ok) continue;
+    const pj = await p.json();
+    const status = pj && pj.data && pj.data.status;
+    if (status === 'COMPLETED') {
+      const generated = pj.data.generated || [];
+      const url = generated[0] && (generated[0].url || generated[0]);
+      const finalUrl = typeof url === 'string' ? url : (url && url.url);
+      if (!finalUrl) throw new Error('Freepik: completed but no url');
+      return finalUrl;
     }
-    return arr.slice(0, n || 3).map(function(b){return clean(b, 80);});
+    if (status === 'FAILED') throw new Error('Freepik: task failed');
+  }
+  throw new Error('Freepik: poll timeout');
 }
 
-// ---------- PROMPT BUILDER ----------
-// Monta o roteiro de 6 cenas com neuromarketing + texto renderizado.
-function buildRoadmap(listing, marketplace) {
-    const aspect = MARKETPLACE_ASPECT[marketplace] || MARKETPLACE_ASPECT.default;
-    const produto = shortTitle(listing);
-    const benefs = topBenefits(listing, 3);
-    const b1 = benefs[0] || 'qualidade premium';
-    const b2 = benefs[1] || 'facil de usar';
-    const b3 = benefs[2] || 'resultado rapido';
-
-    // PT-BR texto que sera RENDERIZADO dentro da imagem pelo Flux Kontext Pro.
-    // Flux Kontext renderiza texto curto com alta fidelidade quando instruido
-    // explicitamente com "render the EXACT text" e aspas.
-
-    return [
-        // 1. HOOK - pergunta que para o scroll (padrao-interrupcao)
-        {
-            idx: 0,
-            role: 'hook',
-            label: 'Hook (parar o scroll)',
-            aspect: aspect,
-            prompt:
-                'High-end lifestyle product advertising photography, square composition. ' +
-                'A person in a modern Brazilian home or office environment looking frustrated/curious, ' +
-                'with the product "' + produto + '" visible on the side. ' +
-                'Cinematic warm lighting, shallow depth of field, 4k, photorealistic. ' +
-                'STRICTLY NO WHITE STUDIO BACKGROUND - must be a real contextual scene. ' +
-                'IMPORTANT: render the EXACT Portuguese text "VOCE AINDA NAO TEM ISSO?" ' +
-                'as a BOLD YELLOW sans-serif headline at the top of the image, clearly legible, ' +
-                'with a small subtitle "(Olha o que ta bombando)" below it in white. ' +
-                'Text must be perfectly spelled, no gibberish letters.'
-        },
-
-        // 2. PRODUTO LIMPO - unica cena com fundo branco (foto de catalogo + badge)
-        {
-            idx: 1,
-            role: 'produto_limpo',
-            label: 'Produto em destaque',
-            aspect: aspect,
-            prompt:
-                'Professional e-commerce catalog photo of "' + produto + '" on a pure white seamless background, ' +
-                'soft shadow, studio lighting, ultra detailed, centered, 4k, square composition. ' +
-                'IMPORTANT: render the EXACT Portuguese text "MAIS VENDIDO" as a red rounded badge ' +
-                'in the top-right corner, and "FRETE GRATIS" as a small green tag in the bottom-left. ' +
-                'All text perfectly legible, no gibberish.'
-        },
-
-        // 3. EM USO - prova visual (espelho-neural, "eu me vejo usando")
-        {
-            idx: 2,
-            role: 'em_uso',
-            label: 'Produto em uso',
-            aspect: aspect,
-            prompt:
-                'Candid lifestyle photography: a Brazilian person actively using "' + produto + '" ' +
-                'in a real home/kitchen/office environment, authentic moment, warm natural light, ' +
-                'shallow depth of field, photorealistic, 4k, square composition. ' +
-                'STRICTLY NO WHITE STUDIO BACKGROUND - must be an ambient real-world scene. ' +
-                'IMPORTANT: render the EXACT Portuguese text "FUNCIONA DE VERDADE" as a bold white headline ' +
-                'with black outline at the bottom of the image, perfectly legible, no gibberish.'
-        },
-
-        // 4. BENEFICIO PRINCIPAL - ganho concreto (padrao-recompensa)
-        {
-            idx: 3,
-            role: 'beneficio',
-            label: 'Beneficio principal',
-            aspect: aspect,
-            prompt:
-                'Macro close-up lifestyle shot showing the key benefit of "' + produto + '" in action, ' +
-                'detailed texture, premium feel, cinematic lighting, ambient contextual background ' +
-                '(NOT white studio), photorealistic, 4k, square. ' +
-                'IMPORTANT: render the EXACT Portuguese text "' + clean(b1, 40).toUpperCase() + '" ' +
-                'as a large bold white headline with a semi-transparent black bar behind it, centered, ' +
-                'perfectly legible, no gibberish.'
-        },
-
-        // 5. PROVA SOCIAL - numeros + estrelas (padrao-manada)
-        {
-            idx: 4,
-            role: 'prova_social',
-            label: 'Prova social',
-            aspect: aspect,
-            prompt:
-                'Lifestyle photograph of "' + produto + '" on a warm wooden table with a coffee cup ' +
-                'and a smartphone showing a 5-star review, cozy ambient Brazilian home background ' +
-                '(NOT white studio), warm light, bokeh, photorealistic, 4k, square composition. ' +
-                'IMPORTANT: render the EXACT Portuguese text "+10 MIL CLIENTES SATISFEITOS" ' +
-                'as a bold white headline at the top, and below it render FIVE YELLOW STARS followed by ' +
-                '"4,9/5" in white. All text perfectly spelled, no gibberish.'
-        },
-
-        // 6. CTA - escassez + acao (padrao-urgencia)
-        {
-            idx: 5,
-            role: 'cta',
-            label: 'Chamada para acao',
-            aspect: aspect,
-            prompt:
-                'Dramatic product hero shot of "' + produto + '" on a dark gradient ambient background ' +
-                '(dark blue to black, NOT white), rim lighting, cinematic, premium advertising style, ' +
-                'photorealistic, 4k, square composition. ' +
-                'IMPORTANT: render the EXACT Portuguese text "ULTIMAS UNIDADES" as a bold red headline ' +
-                'at the top, and a big yellow rounded button at the bottom with the EXACT text ' +
-                '"QUERO O MEU AGORA" in bold black letters inside the button. ' +
-                'All text perfectly spelled, centered, no gibberish.'
-        }
-    ];
+async function downloadImageBuffer(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('download ' + r.status);
+  const ab = await r.arrayBuffer();
+  return Buffer.from(ab);
 }
 
-// ---------- upload helper ----------
-// Flux Kontext Pro exige `input_image` como URL publica, nao aceita base64.
-// Uploadamos o base64 do usuario para tmpfiles.org para obter uma URL temporaria.
-async function uploadBase64ToUrl(imageBase64) {
-    try {
-        if (!imageBase64 || typeof imageBase64 !== 'string') return null;
-        const m = imageBase64.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.*)$/);
-        const mime = m ? m[1] : 'image/jpeg';
-        const b64 = m ? m[2] : imageBase64;
-        const buffer = Buffer.from(b64, 'base64');
-        const form = new FormData();
-        form.append('file', new Blob([buffer], { type: mime }), 'product.jpg');
-        const r = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: form });
-        const json = await r.json();
-        const url = json && json.data && json.data.url;
-        if (!url) return null;
-        // tmpfiles.org retorna URL de pagina; o download direto usa /dl/
-        return url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-    } catch (e) {
-        console.error('upload failed:', e && e.message);
-        return null;
+// ---------- Sharp text overlay ----------
+// Compoe overlay tipografico por cima da imagem gerada.
+// - copy_overlay: barra superior (hook) ou inferior (demais).
+// - cta_overlay (apenas angulo 6): botao amarelo arredondado abaixo do copy.
+async function composeOverlay(imageBuffer, copy, cta, role) {
+  const meta = await sharp(imageBuffer).metadata();
+  const W = meta.width  || 1024;
+  const H = meta.height || 1024;
+
+  // Copy no topo apenas para o hook; nos demais, embaixo.
+  const copyOnTop = role === 'hook_parar_scroll';
+
+  const copyText = String(copy || '').toUpperCase().trim();
+  const ctaText  = String(cta  || '').toUpperCase().trim();
+
+  const lines = wrapText(copyText, 18);
+  const lineCount = Math.max(1, lines.length);
+
+  // Tipografia proporcional ao lado menor.
+  const base = Math.min(W, H);
+  const fontSize = Math.round(base * 0.072);
+  const lineHeight = Math.round(fontSize * 1.18);
+  const padX = Math.round(base * 0.05);
+  const padY = Math.round(base * 0.035);
+
+  const barHeight = lineCount * lineHeight + padY * 2;
+  const barY = copyOnTop ? 0 : H - barHeight - (ctaText ? Math.round(base * 0.16) : 0);
+
+  // SVG: barra preta semi-transparente + texto branco com leve stroke.
+  const svgParts = [];
+  svgParts.push('<svg width="' + W + '" height="' + H + '" xmlns="http://www.w3.org/2000/svg">');
+  svgParts.push('<style>');
+  svgParts.push('.copy { font-family: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 900; fill: #FFFFFF; stroke: #000000; stroke-width: 2px; paint-order: stroke; }');
+  svgParts.push('.cta  { font-family: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 900; fill: #111111; }');
+  svgParts.push('</style>');
+
+  // Barra de fundo
+  if (copyText) {
+    svgParts.push('<rect x="0" y="' + barY + '" width="' + W + '" height="' + barHeight + '" fill="black" fill-opacity="0.62"/>');
+    // Linhas de copy
+    for (let i = 0; i < lines.length; i++) {
+      const ty = barY + padY + (i + 1) * lineHeight - Math.round(lineHeight * 0.25);
+      svgParts.push(
+        '<text x="' + (W / 2) + '" y="' + ty + '" class="copy" font-size="' + fontSize + '" text-anchor="middle">' +
+        escapeXml(lines[i]) +
+        '</text>'
+      );
     }
+  }
+
+  // CTA: botao amarelo arredondado
+  if (ctaText) {
+    const btnW = Math.round(W * 0.78);
+    const btnH = Math.round(base * 0.12);
+    const btnX = Math.round((W - btnW) / 2);
+    const btnY = H - btnH - Math.round(base * 0.04);
+    const ctaFont = Math.round(btnH * 0.46);
+    const ctaY = btnY + Math.round(btnH * 0.66);
+    svgParts.push('<rect x="' + btnX + '" y="' + btnY + '" width="' + btnW + '" height="' + btnH + '" rx="' + Math.round(btnH * 0.5) + '" ry="' + Math.round(btnH * 0.5) + '" fill="#FFD400" stroke="#000000" stroke-width="3"/>');
+    svgParts.push(
+      '<text x="' + (W / 2) + '" y="' + ctaY + '" class="cta" font-size="' + ctaFont + '" text-anchor="middle">' +
+      escapeXml(ctaText) +
+      '</text>'
+    );
+  }
+
+  svgParts.push('</svg>');
+  const svgBuffer = Buffer.from(svgParts.join(''));
+
+  const out = await sharp(imageBuffer)
+    .composite([{ input: svgBuffer, top: 0, left: 0 }])
+    .jpeg({ quality: 86, progressive: true })
+    .toBuffer();
+
+  return 'data:image/jpeg;base64,' + out.toString('base64');
 }
 
-// ---------- Freepik call ----------
-async function generateScene(scene, inputImageUrl) {
-    const body = {
-        prompt: scene.prompt,
-        aspect_ratio: scene.aspect
-    };
-    // Flux Kontext Pro usa input_image (URL) para preservar o produto
-    if (inputImageUrl) body.input_image = inputImageUrl;
-
-    const createResp = await fetch(FREEPIK_ENDPOINT, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-freepik-api-key': FREEPIK_API_KEY
-        },
-        body: JSON.stringify(body)
-    });
-
-    if (!createResp.ok) {
-        const err = await createResp.text();
-        throw new Error('Freepik create ' + createResp.status + ': ' + err.substring(0, 200));
-    }
-
-    const created = await createResp.json();
-    const taskId = created && created.data && created.data.task_id;
-    if (!taskId) throw new Error('Freepik: missing task_id');
-
-    // Poll
-    const pollUrl = FREEPIK_ENDPOINT + '/' + taskId;
-    const maxTries = 40;
-    for (let i = 0; i < maxTries; i++) {
-        await new Promise(r => setTimeout(r, 2500));
-        const p = await fetch(pollUrl, { headers: { 'x-freepik-api-key': FREEPIK_API_KEY } });
-        if (!p.ok) continue;
-        const pj = await p.json();
-        const status = pj && pj.data && pj.data.status;
-        if (status === 'COMPLETED') {
-            const generated = pj.data.generated || [];
-            const url = generated[0] && (generated[0].url || generated[0]);
-            if (url) {
-                return {
-                    idx: scene.idx,
-                    role: scene.role,
-                    label: scene.label,
-                    imageUrl: typeof url === 'string' ? url : (url.url || ''),
-                    prompt: scene.prompt
-                };
-            }
-            throw new Error('Freepik: completed but no url');
-        }
-        if (status === 'FAILED') throw new Error('Freepik: task failed');
-    }
-    throw new Error('Freepik: poll timeout');
+// ---------- pipeline por angulo ----------
+async function renderAngulo(angulo, aspect) {
+  const prompt = String(angulo.cena_visual || '').trim();
+  if (!prompt) throw new Error('cena_visual vazia no angulo ' + angulo.ordem);
+  const imgUrl = await generateImageFromPrompt(prompt, aspect);
+  const buf = await downloadImageBuffer(imgUrl);
+  const dataUrl = await composeOverlay(buf, angulo.copy_overlay, angulo.cta_overlay, angulo.papel_no_fluxo);
+  return {
+    idx: (angulo.ordem || 0) - 1,
+    role: angulo.papel_no_fluxo,
+    label: angulo.conceito || angulo.papel_no_fluxo,
+    copy: angulo.copy_overlay || '',
+    cta: angulo.cta_overlay || '',
+    prompt: prompt,
+    imageDataUrl: dataUrl
+  };
 }
 
 // ---------- handler ----------
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  try {
+    if (!FREEPIK_API_KEY) return res.status(500).json({ error: 'FREEPIK_API_KEY not configured' });
+
+    const { imageBase64, listing, marketplace, descricaoTecnica } = req.body || {};
+    if (!imageBase64) return res.status(400).json({ error: 'imageBase64 required' });
+    if (!listing)     return res.status(400).json({ error: 'listing required' });
+
+    const aspect = MARKETPLACE_ASPECT[marketplace] || MARKETPLACE_ASPECT.default;
+
+    // 1. Brief dinamico (vision)
+    const brief = await fetchBrief(req, imageBase64, listing, descricaoTecnica);
+
+    // 2-3. Gera + compoe os 6 angulos em paralelo, tolerando falhas individuais
+    const angulos = brief.angulos_criativos.slice(0, 6);
+    const results = await Promise.allSettled(
+      angulos.map(function (a) { return renderAngulo(a, aspect); })
+    );
+
+    const scenes = [];
+    const errors = [];
+    results.forEach(function (r, i) {
+      if (r.status === 'fulfilled') scenes.push(r.value);
+      else errors.push({
+        idx: i,
+        role: angulos[i] && angulos[i].papel_no_fluxo,
+        error: String(r.reason && r.reason.message || r.reason).substring(0, 300)
+      });
+    });
+
+    if (!scenes.length) {
+      return res.status(502).json({ error: 'all_scenes_failed', errors: errors, brief: brief });
     }
-    try {
-        if (!FREEPIK_API_KEY) {
-            return res.status(500).json({ error: 'FREEPIK_API_KEY not configured' });
-        }
-        const { imageBase64, listing, marketplace } = req.body || {};
-        if (!listing) return res.status(400).json({ error: 'listing required' });
 
-        const roadmap = buildRoadmap(listing, marketplace || 'default');
+    scenes.sort(function (a, b) { return a.idx - b.idx; });
 
-        // Faz upload do base64 do usuario para gerar URL publica (Flux exige URL)
-        const inputImageUrl = await uploadBase64ToUrl(imageBase64);
-
-        // Roda as 6 cenas em paralelo, tolerando falhas individuais
-        const results = await Promise.allSettled(
-            roadmap.map(function (s) { return generateScene(s, inputImageUrl); })
-        );
-
-        const scenes = [];
-        const errors = [];
-        results.forEach(function (r, i) {
-            if (r.status === 'fulfilled') {
-                scenes.push(r.value);
-            } else {
-                errors.push({ idx: roadmap[i].idx, role: roadmap[i].role, error: String(r.reason).substring(0, 200) });
-            }
-        });
-
-        if (!scenes.length) {
-            return res.status(502).json({ error: 'All scenes failed', errors: errors });
-        }
-
-        scenes.sort(function (a, b) { return a.idx - b.idx; });
-        return res.status(200).json({
-            scenes: scenes,
-            total: scenes.length,
-            failed: errors.length,
-            errors: errors
-        });
-    } catch (e) {
-        console.error('generate-carrossel error', e);
-        return res.status(500).json({ error: String(e && e.message || e) });
-    }
+    return res.status(200).json({
+      scenes: scenes,
+      total: scenes.length,
+      failed: errors.length,
+      errors: errors,
+      brief: brief
+    });
+  } catch (e) {
+    console.error('generate-carrossel error', e);
+    return res.status(500).json({ error: String(e && e.message || e) });
+  }
 }
