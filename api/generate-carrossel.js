@@ -154,20 +154,38 @@ function buildRoadmap(listing, marketplace) {
     ];
 }
 
+// ---------- upload helper ----------
+// Flux Kontext Pro exige `input_image` como URL publica, nao aceita base64.
+// Uploadamos o base64 do usuario para tmpfiles.org para obter uma URL temporaria.
+async function uploadBase64ToUrl(imageBase64) {
+    try {
+        if (!imageBase64 || typeof imageBase64 !== 'string') return null;
+        const m = imageBase64.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.*)$/);
+        const mime = m ? m[1] : 'image/jpeg';
+        const b64 = m ? m[2] : imageBase64;
+        const buffer = Buffer.from(b64, 'base64');
+        const form = new FormData();
+        form.append('file', new Blob([buffer], { type: mime }), 'product.jpg');
+        const r = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: form });
+        const json = await r.json();
+        const url = json && json.data && json.data.url;
+        if (!url) return null;
+        // tmpfiles.org retorna URL de pagina; o download direto usa /dl/
+        return url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+    } catch (e) {
+        console.error('upload failed:', e && e.message);
+        return null;
+    }
+}
+
 // ---------- Freepik call ----------
-async function generateScene(scene, imageBase64) {
+async function generateScene(scene, inputImageUrl) {
     const body = {
         prompt: scene.prompt,
-        aspect_ratio: scene.aspect,
-        num_images: 1
+        aspect_ratio: scene.aspect
     };
-    // Flux Kontext Pro aceita reference_images em base64 para preservar o produto
-    if (imageBase64) {
-        const b64 = typeof imageBase64 === 'string'
-            ? imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '')
-            : '';
-        if (b64) body.reference_images = [b64];
-    }
+    // Flux Kontext Pro usa input_image (URL) para preservar o produto
+    if (inputImageUrl) body.input_image = inputImageUrl;
 
     const createResp = await fetch(FREEPIK_ENDPOINT, {
         method: 'POST',
@@ -229,9 +247,12 @@ export default async function handler(req, res) {
 
         const roadmap = buildRoadmap(listing, marketplace || 'default');
 
+        // Faz upload do base64 do usuario para gerar URL publica (Flux exige URL)
+        const inputImageUrl = await uploadBase64ToUrl(imageBase64);
+
         // Roda as 6 cenas em paralelo, tolerando falhas individuais
         const results = await Promise.allSettled(
-            roadmap.map(function (s) { return generateScene(s, imageBase64); })
+            roadmap.map(function (s) { return generateScene(s, inputImageUrl); })
         );
 
         const scenes = [];
