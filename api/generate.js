@@ -162,6 +162,26 @@ function sanitizeForMarketplace(text, marketplace) {
   if (!EMOJI_FORBIDDEN_MARKETPLACES.has(marketplace)) return text;
   return stripEmojis(text);
 };
+async function resolveMercadoLivreCategory(query) {
+  if (!query) return null;
+  try {
+    const q = encodeURIComponent(String(query).slice(0, 120));
+    const r = await fetch('https://api.mercadolibre.com/sites/MLB/domain_discovery/search?limit=1&q=' + q);
+    if (!r.ok) return null;
+    const arr = await r.json();
+    if (!Array.isArray(arr) || arr.length === 0 || !arr[0].category_id) return null;
+    const catId = arr[0].category_id;
+    const cr = await fetch('https://api.mercadolibre.com/categories/' + catId);
+    if (!cr.ok) return { id: catId, path: arr[0].category_name || '' };
+    const cat = await cr.json();
+    const path = (cat.path_from_root || []).map(function(p){return p.name;}).join(' > ');
+    return { id: catId, path: path || cat.name || '' };
+  } catch (e) {
+    console.error('[ML category] fetch failed:', e && e.message);
+    return null;
+  }
+}
+
 
 function formatResultForDisplay(structured, marketplace) {
   const config = marketplaceConfigs[marketplace] || marketplaceConfigs.mercadolivre;
@@ -398,6 +418,19 @@ export default async function handler(req, res) {
         backend_keywords: structured.backend_keywords || '',
         _original: structured
       };
+    }
+
+    // Resolve categoria real do Mercado Livre via domain_discovery API
+    if (mappedListing && marketplace === 'mercadolivre') {
+      try {
+        const realCat = await resolveMercadoLivreCategory(mappedListing.title || productName || '');
+        if (realCat && realCat.path) {
+          mappedListing.category = realCat.path;
+          mappedListing.category_id = realCat.id;
+        }
+      } catch (e) {
+        console.error('[ML category] resolve failed:', e && e.message);
+      }
     }
 
     return res.status(200).json({
