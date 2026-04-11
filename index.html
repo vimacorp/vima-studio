@@ -2287,38 +2287,70 @@
                 }
             }
 
-            displayVideoPreview(video) { if (video && video.videoUrl) { var __s = document.getElementById("videoSection"); if (__s) { __s.style.display = "block"; __s.innerHTML = '<div style="padding:20px;"><h3 style="color:#fff;margin-bottom:12px;">Video Gerado - Kling 2.1 AI</h3><video src="' + video.videoUrl + '" controls autoplay loop playsinline style="width:100%;max-width:480px;border-radius:12px;display:block;margin:0 auto;"></video><p style="text-align:center;color:#4ade80;margin-top:10px;font-size:13px;">Gerado por Kling 2.1 via PiAPI</p></div>'; } return; }
-                var section = document.getElementById("videoSection");
-                if (section) section.style.display = "block";
-                var container = document.getElementById("videoContent");
-                if (!container) return;
-                var scenesHtml = "";
-                var self = this;
-                video.scenes.forEach(function(scene, i) {
-                    scenesHtml += '<div class="scene-card" style="padding:8px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="app.drawScene(app.currentListing.videoData.scenes[' + i + '])">' +
-                        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                        '<span style="color:#a78bfa;font-weight:600;font-size:13px;">Cena ' + (i + 1) + ' - ' + (scene.category || '') + '</span>' +
-                        '<span style="color:#888;font-size:12px;">' + (scene.duration || 5) + 's</span>' +
-                        '</div>' +
-                        '<div style="color:#fff;font-size:14px;margin-top:4px;">' + (scene.text || '') + '</div>' +
-                        '<div style="color:#999;font-size:12px;margin-top:2px;">' + (scene.subtext || '') + '</div>' +
-                        '</div>';
-                });
-                container.innerHTML = '<div style="display:flex;gap:20px;flex-wrap:wrap;">' +
-                    '<div style="flex:1;min-width:280px;">' +
-                    '<canvas id="videoCanvas" width="1080" height="1920" style="width:100%;max-width:360px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);"></canvas>' +
-                    '<div style="display:flex;gap:10px;margin-top:12px;justify-content:center;">' +
-                    '<button onclick="app.playVideo()" class="btn-primary" style="padding:10px 24px;border-radius:8px;font-size:14px;">&#9654; Reproduzir Video</button>' +
-                    '<button onclick="app.downloadVideo()" class="btn-secondary" style="padding:10px 24px;border-radius:8px;font-size:14px;">&#11015; Download MP4</button>' +
-                    '</div></div>' +
-                    '<div style="flex:1;min-width:250px;">' +
-                    '<h4 style="color:#a78bfa;margin-bottom:10px;">Roteiro do Video (' + video.totalDuration + 's)</h4>' +
-                    '<div style="max-height:400px;overflow-y:auto;">' + scenesHtml + '</div>' +
-                    (video.narration ? '<details style="margin-top:12px;"><summary style="color:#a78bfa;cursor:pointer;font-size:13px;">Texto de Narracao</summary><p style="color:#ccc;font-size:13px;margin-top:8px;line-height:1.5;">' + video.narration + '</p></details>' : '') +
-                    '</div></div>';
-                if (video.scenes && video.scenes.length > 0) {
-                    this.drawScene(video.scenes[0]);
+            displayVideoPreview(data) {
+                var host = document.getElementById('videoResult') || document.getElementById('result');
+                if (!host) return;
+                var scenes = (data && Array.isArray(data.scenes)) ? data.scenes.filter(function(s){return s && s.videoUrl;}) : [];
+                if (scenes.length === 0 && data && data.videoUrl) {
+                    scenes = [{ videoUrl: data.videoUrl, narration: '', duration: data.duration || 5 }];
                 }
+                if (scenes.length === 0) { host.innerHTML = '<div class="error">Nenhuma cena gerada.</div>'; return; }
+                var total = data && data.totalDuration ? data.totalDuration : scenes.length * 5;
+                var html = '';
+                html += '<div class="video-preview" style="background:#0f0f15;padding:1.5rem;border-radius:16px;margin-top:1rem;">';
+                html += '<h3 style="color:#fff;margin:0 0 1rem 0;">Video Comercial Multi-Cena (' + total + 's narrado)</h3>';
+                html += '<video id="vimaVideoPlayer" playsinline controls style="width:100%;max-width:540px;border-radius:12px;display:block;margin:0 auto;"></video>';
+                html += '<div id="vimaVideoNarration" style="color:#e5e7eb;font-size:.95rem;text-align:center;margin-top:.75rem;min-height:2.4em;font-style:italic;">Clique em play para iniciar</div>';
+                html += '<div style="display:flex;gap:.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;">';
+                html += '<button class="btn-action" id="vimaPlayAll" style="background:#10b981;color:#fff;">&#x25B6; Reproduzir com narracao</button>';
+                html += '<button class="btn-action" id="vimaMute" style="background:#374151;color:#fff;">&#x1F507; Silenciar narracao</button>';
+                html += '</div>';
+                html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;margin-top:1rem;">';
+                for (var i=0;i<scenes.length;i++) {
+                    var n = scenes[i].narration || '';
+                    html += '<div style="background:#1f2937;padding:.6rem;border-radius:8px;color:#d1d5db;font-size:.75rem;"><b style="color:#10b981;">Cena '+(i+1)+'</b><br>'+n.replace(/</g,'&lt;')+'</div>';
+                }
+                html += '</div></div>';
+                host.innerHTML = html;
+                var self = this;
+                var idx = 0; var muted = false;
+                var player = document.getElementById('vimaVideoPlayer');
+                var narr = document.getElementById('vimaVideoNarration');
+                function speak(text) {
+                    try {
+                        if (muted || !text || !window.speechSynthesis) return;
+                        window.speechSynthesis.cancel();
+                        var u = new SpeechSynthesisUtterance(text);
+                        u.lang = 'pt-BR'; u.rate = 1.05; u.pitch = 1; u.volume = 1;
+                        var voices = window.speechSynthesis.getVoices();
+                        var pt = voices.find(function(v){return /pt[-_]BR/i.test(v.lang);}) || voices.find(function(v){return /pt/i.test(v.lang);});
+                        if (pt) u.voice = pt;
+                        window.speechSynthesis.speak(u);
+                    } catch(e){}
+                }
+                function playScene(i) {
+                    if (i >= scenes.length) { narr.textContent = 'Fim do video'; return; }
+                    idx = i;
+                    player.src = scenes[i].videoUrl;
+                    narr.textContent = 'Cena ' + (i+1) + '/' + scenes.length + ' - ' + (scenes[i].narration || '');
+                    player.play().catch(function(){});
+                    speak(scenes[i].narration);
+                }
+                player.addEventListener('ended', function(){ playScene(idx+1); });
+                document.getElementById('vimaPlayAll').addEventListener('click', function(){
+                    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch(e){}
+                    playScene(0);
+                });
+                document.getElementById('vimaMute').addEventListener('click', function(ev){
+                    muted = !muted;
+                    ev.currentTarget.textContent = muted ? '&#x1F50A; Ativar narracao' : '&#x1F507; Silenciar narracao';
+                    if (muted) { try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch(e){} }
+                });
+                // load voices async (Chrome)
+                if (window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = function(){ window.speechSynthesis.getVoices(); }; }
+                this.currentListing = this.currentListing || {};
+                this.currentListing.videoScenes = scenes;
+                this.currentListing.videoUrl = scenes[0].videoUrl;
             }
 
 
