@@ -206,7 +206,7 @@ async function renderAngulo(angulo, aspect) {
     copy: angulo.copy_overlay || '',
     cta: angulo.cta_overlay || '',
     prompt: prompt,
-    imageDataUrl: dataUrl
+    imageUrl: dataUrl, imageDataUrl: dataUrl
   };
 }
 
