@@ -411,8 +411,19 @@
         .action-buttons {
             padding: 2rem;
             display: flex;
-            gap: 1rem;
-            justify-content: center;
+            flex-direction: column;
+            gap: 1.25rem;
+            max-width: 640px;
+            margin: 0 auto;
+            align-items: stretch;
+        }
+        .action-buttons .btn-action {
+            width: 100%;
+            padding: 1.1rem 1.5rem;
+            font-size: 1.05rem;
+        }
+        .action-buttons .btn-action + .btn-action {
+            margin-top: 0;
         }
 
         /* New Listing Page */
